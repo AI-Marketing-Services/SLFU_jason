@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendingPreneur — Your Custom Projection</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary:    #1F9AC5;
+  --primary-dark: #0D5E78;
+  --primary-light: #6BCFF0;
+  --accent:     #A2F2D4;
+  --accent-dark: #0086A8;
+  --accent-light: #38CFF3;
+  --bg-light:   #E8FAFF;
+  --bg-lighter: #F8FCFE;
+  --bg-mint:    #E0F7F5;
+  --text:       #1E1E1E;
+  --text-mid:   #3A3A3A;
+  --text-light: #B9B9B9;
+  --white:      #FFFFFF;
+  --navy:       #0D5E78;
+  --navy-2:     #1F9AC5;
+  --navy-3:     #6BCFF0;
+  --gold:       #1F9AC5;
+  --gold-2:     #6BCFF0;
+  --green:      #0D5E78;
+  --green-2:    #A2F2D4;
+  --red:        #D94F3D;
+  --cream:      #F8FCFE;
+  --cream-2:    #E8FAFF;
+  --card-bg:    #E8FAFF;
+  --card-text:  #1E1E1E;
+  --card-text-mid: #3A3A3A;
+  --card-border: rgba(31,154,197,0.2);
+  --border:     rgba(31,154,197,0.15);
+  --border-2:   rgba(31,154,197,0.08);
+  --shadow-sm:  0 2px 8px rgba(13,94,120,0.08);
+  --shadow-md:  0 6px 24px rgba(13,94,120,0.12);
+  --shadow-lg:  0 16px 48px rgba(13,94,120,0.18);
+  --radius:     12px;
+  --radius-sm:  8px;
+  --radius-lg:  16px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+h1,h2,h3 { font-family: 'Poppins', sans-serif; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--navy);
+  padding: 0 32px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 20px rgba(11,30,51,0.4);
+}
+.topbar-brand {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.3px;
+}
+.topbar-brand span { color: var(--gold-2); }
+.topbar-right { display: flex; align-items: center; gap: 20px; }
+.topbar-secure {
+  font-size: 12px; font-weight: 600;
+  color: var(--green-2);
+}
+
+/* ─── PROGRESS ─── */
+.progress-wrap {
+  position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
+  background: var(--navy-2);
+  padding: 0 32px;
+  height: 52px;
+  display: flex; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.progress-steps { display: flex; align-items: center; gap: 0; flex: 1; max-width: 600px; margin: 0 auto; }
+.prog-step { display: flex; align-items: center; gap: 0; cursor: pointer; flex: 1; }
+.prog-dot-wrap { display: flex; align-items: center; gap: 0; flex: 1; }
+.prog-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.3s ease;
+  flex-shrink: 0; position: relative; z-index: 2;
+  background: var(--navy-2);
+}
+.prog-dot.active {
+  border-color: var(--white); color: var(--white);
+  background: var(--primary-dark);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
+}
+.prog-dot.done { border-color: var(--accent); background: var(--primary-dark); color: white; }
+.prog-line {
+  flex: 1; height: 2px;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.4s ease;
+  margin: 0 -1px; position: relative; z-index: 1;
+}
+.prog-line.done { background: var(--accent); }
+
+/* ─── MAIN ─── */
+.main {
+  padding-top: 112px;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+}
+.step-screen {
+  display: none; width: 100%; max-width: 820px;
+  padding: 48px 24px 80px;
+  animation: stepIn 0.4s ease forwards;
+}
+.step-screen.active { display: block; }
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── HEADER ─── */
+.step-eyebrow {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--primary); margin-bottom: 10px;
+}
+.step-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 38px; font-weight: 700;
+  color: var(--navy); line-height: 1.15; margin-bottom: 10px;
+}
+.step-desc {
+  font-size: 16px; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+  max-width: 600px; margin-bottom: 36px;
+}
+
+/* ─── FORMS ─── */
+.form-section-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-mid); margin-bottom: 14px; margin-top: 8px;
+}
+.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 12px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.5px; }
+.required-star { color: var(--red); font-weight: 700; }
+.form-input {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px; font-weight: 500;
+  color: var(--navy); transition: border-color 0.2s; outline: none;
+  width: 100%;
+}
+.form-input:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--text-light); font-weight: 400; }
+textarea.form-input { resize: vertical; min-height: 80px; }
+.field-error {
+  color: var(--red); font-size: 12px; margin-top: 4px; display: none;
+}
+.form-input.error { border-color: var(--red); }
+.skip-hint { font-size: 11px; color: var(--text-mid); font-style: italic; margin-top: -4px; margin-bottom: 8px; opacity: .7; }
+
+/* ─── DROPDOWN ─── */
+select.form-input {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231F9AC5' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* ─── MULTI LABEL ─── */
+.multi-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--navy); margin-bottom: 8px; margin-top: 24px;
+}
+
+/* ─── BUTTONS ─── */
+.step-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);
+}
+.btn-back {
+  background: transparent; border: 2px solid var(--border);
+  padding: 12px 24px; border-radius: var(--radius-sm);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  color: var(--text-mid); cursor: pointer; transition: all 0.2s;
+}
+.btn-back:hover { border-color: var(--text-mid); color: var(--navy); }
+.btn-next {
+  background: var(--navy-2); border: none;
+  padding: 14px 28px; border-radius: var(--radius-sm);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  color: white; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-next:hover { background: var(--navy-3); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-next-arrow { font-size: 16px; transition: transform 0.2s; }
+.btn-next:hover .btn-next-arrow { transform: translateX(4px); }
+
+/* ─── COUNTER CARDS ─── */
+.counter-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.2s;
+}
+.counter-card.active { border-color: var(--primary); background: rgba(31,154,197,.08); }
+.counter-card .cc-icon { font-size: 20px; flex-shrink: 0; }
+.counter-card .cc-name { font-size: 13px; font-weight: 600; color: var(--card-text); flex: 1; min-width: 0; }
+.counter-card .cc-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.counter-card .cc-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: var(--text-mid);
+  cursor: pointer; transition: all 0.15s;
+  user-select: none;
+}
+.counter-card .cc-btn:hover { border-color: var(--primary); color: var(--primary); }
+.counter-card .cc-btn.disabled { opacity: 0.3; pointer-events: none; }
+.counter-card .cc-count {
+  min-width: 24px; text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px; font-weight: 700; color: var(--navy);
+}
+.counter-card .cc-count.zero { color: var(--text-light); opacity: 0.5; }
+
+/* ─── LOCATION TYPE CARDS ─── */
+.card-grid { display: grid; gap: 12px; margin-bottom: 28px; }
+.card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.opt-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  cursor: pointer; transition: all 0.2s;
+  text-align: center;
+  position: relative;
+}
+.opt-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.opt-card.selected {
+  border-color: var(--primary);
+  background: rgba(31,154,197,0.06);
+  box-shadow: 0 0 0 3px rgba(31,154,197,0.12);
+}
+.opt-card.selected::after {
+  content: '✓'; position: absolute; top: 8px; right: 10px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.opt-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+.opt-title { font-weight: 700; font-size: 14px; color: var(--navy); }
+
+/* ─── INFO BOX ─── */
+.info-box {
+  background: var(--bg-light);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px; margin-bottom: 16px;
+  font-size: 13px; color: var(--text-mid); line-height: 1.5;
+}
+
+/* ─── PROJECTION ─── */
+.projection-hero {
+  background: var(--navy);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-bottom: 28px;
+  color: white;
+  text-align: center;
+}
+.proj-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-2); margin-bottom: 8px; }
+.proj-name { font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.proj-summary-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+.proj-summary-tag { background: rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 14px; font-size: 13px; color: rgba(255,255,255,0.9); }
+.proj-summary-tag strong { color: white; }
+
+.proj-big {
+  background: var(--white);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  text-align: center;
+}
+.proj-big-col { padding: 8px 0; }
+.proj-big-col + .proj-big-col { border-left: 1px solid var(--border); }
+.proj-big-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-mid); margin-bottom: 8px; }
+.proj-big-num { font-family: 'Poppins', sans-serif; font-size: 36px; font-weight: 900; color: var(--green); }
+.proj-big-sub { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+@media (max-width: 600px) {
+  .proj-big { grid-template-columns: 1fr; gap: 16px; }
+  .proj-big-col + .proj-big-col { border-left: none; border-top: 1px solid var(--border); padding-top: 16px; }
+}
+
+.proj-table {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 0;
+  margin-bottom: 24px;
+}
+.proj-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-2);
+  font-size: 14px;
+}
+.proj-row:last-child { border-bottom: none; }
+.proj-row-label { color: var(--text-mid); }
+.proj-row-value { font-weight: 700; color: var(--navy); }
+.proj-row-value.neg { color: var(--red); }
+.proj-row-value.pos { color: var(--green); }
+.proj-row.total {
+  background: rgba(31,154,197,.05);
+  font-size: 16px;
+  border-top: 2px solid var(--primary);
+  border-bottom: none;
+}
+.proj-row.total .proj-row-label { font-weight: 700; color: var(--navy); }
+.proj-row.total .proj-row-value { font-size: 18px; }
+
+.cost-waiting-box {
+  background: linear-gradient(135deg, rgba(217,79,61,.08), rgba(217,79,61,.15));
+  border: 2px solid var(--red);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 28px;
+}
+.cw-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--red); margin-bottom: 8px; }
+.cw-headline { font-size: 16px; color: var(--text); line-height: 1.5; }
+.cw-num { font-family: 'Poppins', sans-serif; font-size: 42px; font-weight: 900; color: var(--red); margin: 8px 0; }
+.cw-sub { font-size: 13px; color: var(--text-mid); }
+
+.cta-section {
+  background: var(--bg-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.cta-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--navy); margin-bottom: 8px;
+  text-align: center;
+}
+.cta-sub {
+  font-size: 14px; color: var(--text-mid);
+  text-align: center; margin-bottom: 20px;
+}
+.cta-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+@media (max-width: 600px) {
+  .cta-row { grid-template-columns: 1fr; }
+}
+.cta-field { display: flex; flex-direction: column; gap: 6px; }
+.cta-field-label { font-size: 12px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.5px; }
+
+/* ─── SALES REP CARD ─── */
+.rep-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-top: 16px;
+  text-align: center;
+}
+.rep-eyebrow {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-mid); letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.rep-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--navy); margin-bottom: 4px;
+}
+.rep-email a {
+  font-size: 14px; color: var(--primary);
+  text-decoration: none; font-weight: 600;
+}
+.rep-email a:hover { text-decoration: underline; }
+
+.disclaimer {
+  font-size: 12px; color: var(--text-mid); opacity: 0.75;
+  line-height: 1.5; padding: 12px 16px;
+  background: var(--bg-lighter);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+}
+
+/* ─── ROUTE BUILDER ROWS ─── */
+.route-row {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.route-row-title {
+  font-weight: 700; font-size: 14px; color: var(--navy);
+  margin-bottom: 10px;
+}
+.route-row-fields {
+  display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;
+}
+.route-row-field { flex: 1; min-width: 160px; }
+.route-row-field-label {
+  font-size: 11px; color: var(--text-mid); margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* ─── REC MACHINES DISPLAY ─── */
+.rec-machines-box {
+  text-align: center; padding: 24px;
+  background: var(--bg-light);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+}
+.rec-machines-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 48px; font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+.rec-machines-label {
+  font-size: 13px; color: var(--text-mid); margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .step-title { font-size: 28px; }
+  .form-row { grid-template-columns: 1fr; }
+  .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">Vending<span>Preneur</span> — Get Your Custom Projection</div>
+  <div class="topbar-right">
+    <div class="topbar-secure">🔒 Your info is private</div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-steps" id="progressSteps"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══ STEP 1: ABOUT YOU ══ -->
+  <div class="step-screen active" id="step-1">
+    <div class="step-eyebrow">Step 1 of 3 — Welcome Back</div>
+    <h1 class="step-title">Let's pick up where we left off.</h1>
+    <p class="step-desc">Just confirm your name and we'll put together your custom projection.</p>
+
+    <div class="form-section-label">Your Name</div>
+    <div class="form-row single">
+      <div class="form-field">
+        <label class="form-label">Full Name <span class="required-star">*</span></label>
+        <input class="form-input" type="text" placeholder="John Smith" id="fnName" oninput="clearFieldError(this)">
+        <span class="field-error" id="nameError">Please enter your name.</span>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <div></div>
+      <button class="btn-next" onclick="nextStep()">Continue <span class="btn-next-arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: GOALS & ROUTE ══ -->
+  <div class="step-screen" id="step-2">
+    <div class="step-eyebrow">Step 2 of 3 — Goals &amp; Route</div>
+    <h1 class="step-title">What are you looking to build?</h1>
+    <p class="step-desc">Pick your top goals and ideal locations. We'll calculate the route that fits.</p>
+
+    <!-- TOP 2 GOALS -->
+    <div class="multi-label">Pick your top 2 goals <span class="required-star">*</span></div>
+    <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Your #1 goal weighs more than your #2 in the recommendation.</p>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">#1 Most important goal <span class="required-star">*</span></label>
+        <select class="form-input" id="goal1" onchange="syncGoals()">
+          <option value="">Select your top goal…</option>
+          <option value="supplemental">💰 Supplemental Income</option>
+          <option value="replace">🚀 Replace My Day Job</option>
+          <option value="family">👨‍👩‍👧‍👦 Family Business</option>
+          <option value="scale">📈 Scale &amp; Sell</option>
+        </select>
+        <span class="field-error" id="goal1Error">Please select your #1 goal.</span>
+      </div>
+      <div class="form-field">
+        <label class="form-label">#2 Secondary goal <span class="required-star">*</span></label>
+        <select class="form-input" id="goal2" onchange="syncGoals()">
+          <option value="">Select your secondary goal…</option>
+          <option value="supplemental">💰 Supplemental Income</option>
+          <option value="replace">🚀 Replace My Day Job</option>
+          <option value="family">👨‍👩‍👧‍👦 Family Business</option>
+          <option value="scale">📈 Scale &amp; Sell</option>
+        </select>
+        <span class="field-error" id="goal2Error">Please select your #2 goal (different from #1).</span>
+      </div>
+    </div>
+
+    <!-- DESIRED PROFIT -->
+    <div class="multi-label">Desired Monthly Take-Home Profit <span class="required-star">*</span></div>
+    <p class="step-desc" style="margin-top:-4px;margin-bottom:12px;font-size:14px;">After expenses and restocking, what would you like to take home each month?</p>
+    <div class="form-row single">
+      <div class="form-field">
+        <div style="position:relative;">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;color:var(--primary);z-index:1;">$</span>
+          <input class="form-input" type="text" placeholder="2,500" id="fnDesiredProfit" style="padding-left:32px;font-size:18px;font-weight:600;" oninput="formatProfit(this); recalcMachines();">
+        </div>
+        <span style="font-size:12px;color:var(--text-mid);margin-top:4px;display:block;">per month</span>
+        <span class="field-error" id="profitError">Please enter your desired monthly profit.</span>
+      </div>
+    </div>
+
+    <!-- RECOMMENDED MACHINES -->
+    <div class="multi-label">Your Recommended Number of Machines</div>
+    <div class="rec-machines-box">
+      <div class="rec-machines-num" id="recMachineNum">—</div>
+      <div class="rec-machines-label" id="recMachineLabel">Pick your goals and enter desired profit to see recommendation</div>
+    </div>
+
+    <p class="info-box">💡 More machines isn't always better. Location quality and strategy matter more than count — and they're easier to manage.</p>
+
+    <!-- SPECIFIC ROUTE BUILDER -->
+    <div class="multi-label">Build Your Route <span class="required-star">*</span></div>
+    <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Pick the property types you're considering and how many of each. Then enter the size and machine type for each one.</p>
+
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:10px;">Locations selected: <strong id="propAllocated">0</strong></div>
+    <div id="propertyGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;"></div>
+
+    <div id="propertyUnitInputs" style="margin-bottom:20px;display:none;">
+      <div class="multi-label" style="font-size:15px;margin-top:8px;">Route Details</div>
+      <p class="step-desc" style="margin-top:-4px;margin-bottom:12px;font-size:13px;">For each location, enter the size and choose a machine type.</p>
+      <div id="unitInputsList"></div>
+    </div>
+    <span class="field-error" id="routeError" style="margin-bottom:16px;">Please add at least one location with a size and machine type filled in.</span>
+
+    <!-- LOCATION TYPE -->
+    <div class="multi-label">Location Type <span class="required-star">*</span></div>
+    <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Where are you based?</p>
+    <div class="card-grid cols-4">
+      <div class="opt-card" data-val="major-city" onclick="selectDensity(this)">
+        <span class="opt-icon">🌆</span>
+        <div class="opt-title">Major City</div>
+      </div>
+      <div class="opt-card" data-val="city" onclick="selectDensity(this)">
+        <span class="opt-icon">🏙️</span>
+        <div class="opt-title">City (&lt;1M Pop)</div>
+      </div>
+      <div class="opt-card" data-val="suburban" onclick="selectDensity(this)">
+        <span class="opt-icon">🏘️</span>
+        <div class="opt-title">Suburban</div>
+      </div>
+      <div class="opt-card" data-val="rural" onclick="selectDensity(this)">
+        <span class="opt-icon">🌾</span>
+        <div class="opt-title">Rural</div>
+      </div>
+    </div>
+    <span class="field-error" id="densityError" style="margin-top:-12px;margin-bottom:12px;">Please select your location type.</span>
+
+    <div class="step-nav">
+      <button class="btn-back" onclick="prevStep()">← Back</button>
+      <button class="btn-next" onclick="nextStep()">See My Projection <span class="btn-next-arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3: PROJECTION ══ -->
+  <div class="step-screen" id="step-3">
+    <div class="step-eyebrow">Step 3 of 3 — Your Projection</div>
+    <h1 class="step-title">Here's what your route could earn.</h1>
+    <p class="step-desc">Based on your selections, here's your custom profit projection using real VendingPreneur member data.</p>
+
+    <div class="projection-hero">
+      <div class="proj-eyebrow">Your Custom Route</div>
+      <div class="proj-name" id="projName">—</div>
+      <div class="proj-summary-row" id="projTags"></div>
+    </div>
+
+    <!-- BIG PROFIT NUMBERS -->
+    <div class="proj-big">
+      <div class="proj-big-col">
+        <div class="proj-big-label">Monthly Take-Home Profit</div>
+        <div class="proj-big-num" id="monthlyProfit">—</div>
+        <div class="proj-big-sub">per month</div>
+      </div>
+      <div class="proj-big-col">
+        <div class="proj-big-label">Yearly Take-Home Profit</div>
+        <div class="proj-big-num" id="yearlyProfit">—</div>
+        <div class="proj-big-sub">per year</div>
+      </div>
+    </div>
+
+    <!-- BREAKDOWN -->
+    <div class="multi-label" style="margin-top:8px;">Annual Breakdown</div>
+    <div class="proj-table" id="projTable"></div>
+
+    <!-- COST OF WAITING -->
+    <div class="cost-waiting-box">
+      <div class="cw-eyebrow">⏰ Cost of Waiting</div>
+      <div class="cw-headline">Each month you wait is costing you up to</div>
+      <div class="cw-num" id="costOfWaitingNum">—</div>
+      <div class="cw-sub">in potential monthly take-home profit</div>
+    </div>
+
+    <!-- CTA SECTION: Calendly embed + sales rep contact -->
+    <div class="cta-section">
+      <div class="cta-title">📅 Book Your Discovery Call</div>
+      <div class="cta-sub">Pick a time that works for you. We'll walk through your numbers in detail.</div>
+
+      <!-- Calendly inline embed -->
+      <div class="calendly-inline-widget"
+           data-url=""
+           id="calendlyEmbed"
+           style="min-width:320px;height:700px;margin-top:16px;border-radius:var(--radius);overflow:hidden;"></div>
+      <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+
+      <!-- Sales rep contact card -->
+      <div class="rep-card">
+        <div class="rep-eyebrow">Questions? Reach out directly:</div>
+        <div class="rep-name" id="repNameDisplay">—</div>
+        <div class="rep-email">
+          <a id="repEmailLink" href="#">—</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> These projections are estimates based on VendingPreneur member data across 500+ locations. Actual results depend on location quality, product mix, machine type, and operator effort.
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-back" onclick="prevStep()">← Back</button>
+      <div></div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<script>
+// ══════════════════════════════════
+//  CONFIG — EDIT PER SALES REP
+// ══════════════════════════════════
+const SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwuzHvnQ66XFFcgQPqG8yMevF622YCHzEWhqPTEHXJ1EawB9GdeSdhnwl2x7f7P1DNQNw/exec';
+
+// Hardcoded sales rep info — used for Close lead matching AND step 3 display.
+// Make a copy of this file per rep and edit these three values.
+const SALES_REP = {
+  name: 'Jason Aaron',                           // Must match exactly the Lead Owner name in Close
+  email: 'jasonaaron@modern-amenities.com',
+  calendly: 'https://calendly.com/jasonaaron-modern-amenities/30min',
+};
+
+// ══════════════════════════════════
+//  SESSION ID — persisted so refreshes keep the same sheet row
+// ══════════════════════════════════
+function getSessionId() {
+  let id = sessionStorage.getItem('vp_session_id');
+  if (!id) {
+    id = 'vp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    sessionStorage.setItem('vp_session_id', id);
+  }
+  return id;
+}
+
+// ══════════════════════════════════
+//  STATE
+// ══════════════════════════════════
+const state = {
+  session_id: getSessionId(),
+  step: 1,
+  maxVisited: 1,
+  goal1: null,
+  goal2: null,
+  desiredProfit: null,
+  machines: 1,
+  recommendedMachines: null,
+  propertyCounts: {},
+  routePlacements: {},
+  density: null,
+  projection: null,
+};
+
+const TOTAL_STEPS = 3;
+const STEP_LABELS = ['About You', 'Goals & Route', 'Projection'];
+const STEP_NAMES_MAP = { 1: 'About You', 2: 'Goals & Route', 3: 'Projection' };
+
+// ══════════════════════════════════
+//  PROPERTY / MACHINE / DPM DATA
+// ══════════════════════════════════
+const PROPERTY_DEFS = [
+  {val:'high-rise-apartment', icon:'🏙️', name:'High Rise Apartment'},
+  {val:'mid-rise-apartment', icon:'🏢', name:'Mid Rise Apartment'},
+  {val:'garden-style-apartment', icon:'🏘️', name:'Garden Style Apartment'},
+  {val:'tower-apartment', icon:'🏗️', name:'Tower Style Apartment'},
+  {val:'office', icon:'💼', name:'Office'},
+  {val:'warehouse', icon:'📦', name:'Warehouse'},
+  {val:'manufacturing', icon:'🏭', name:'Manufacturing'},
+  {val:'gym', icon:'💪', name:'Gym'},
+  {val:'rec-center', icon:'🏀', name:'Rec Center'},
+  {val:'hospital', icon:'🏥', name:'Hospital'},
+  {val:'medical-outpatient', icon:'🩺', name:'Medical Outpatient'},
+  {val:'veterinary', icon:'🐾', name:'Veterinary Hospital'},
+  {val:'hotel', icon:'🏨', name:'Hotel'},
+  {val:'school', icon:'🎓', name:'School'},
+  {val:'municipal-gov', icon:'🏛️', name:'Municipal / Gov'},
+  {val:'shelter', icon:'🏠', name:'Shelter'},
+  {val:'other-business', icon:'🏪', name:'Other Business'},
+];
+
+const PROPERTY_LABELS = {
+  'high-rise-apartment':'High Rise Apartment','mid-rise-apartment':'Mid Rise Apartment',
+  'garden-style-apartment':'Garden Style Apartment','tower-apartment':'Tower Style Apartment',
+  'office':'Office','warehouse':'Warehouse','manufacturing':'Manufacturing',
+  'gym':'Gym','rec-center':'Rec Center','hospital':'Hospital',
+  'medical-outpatient':'Medical Outpatient Facility','veterinary':'Veterinary Hospital',
+  'hotel':'Hotel','school':'School','municipal-gov':'Municipal / Government Building',
+  'shelter':'Shelter','other-business':'Other Business',
+};
+
+const UNIT_TYPE_MAP = {
+  'high-rise-apartment': 'Units','mid-rise-apartment': 'Units',
+  'garden-style-apartment': 'Units','tower-apartment': 'Units',
+  'office': 'Employees','warehouse': 'Employees','manufacturing': 'Employees',
+  'gym': 'Daily Visitors','rec-center': 'Daily Visitors','hospital': 'Daily Visitors',
+  'medical-outpatient': 'Daily Visitors','veterinary': 'Daily Visitors',
+  'hotel': 'Daily Visitors','school': 'Daily Visitors',
+  'municipal-gov': 'Daily Visitors','shelter': 'Daily Visitors',
+  'other-business': 'Daily Visitors',
+};
+
+const MACHINE_DEFS = [
+  {val:'snacks-drinks-ai', icon:'🥤', name:'Snacks + Drinks (AI powered)', cost:7000},
+  {val:'drink-machine', icon:'🧃', name:'Drink Machine', cost:4000},
+  {val:'bulk-snacks-frozen', icon:'🍫', name:'Bulk Snacks + Frozen Meals', cost:4000},
+  {val:'freezer', icon:'🧊', name:'Freezer', cost:4700},
+  {val:'micromarket', icon:'🏪', name:'Micromarket', cost:8300},
+  {val:'other', icon:'📦', name:'Other', cost:6000},
+];
+
+const MACHINE_COSTS = {
+  'snacks-drinks-ai': 7000, 'drink-machine': 4000, 'bulk-snacks-frozen': 4000,
+  'freezer': 4700, 'micromarket': 8300, 'other': 6000
+};
+
+const PROP_NAME_MAP = {
+  'high-rise-apartment':'High Rise Apartment','mid-rise-apartment':'Mid Rise Apartment',
+  'garden-style-apartment':'Garden Style Apartment','tower-apartment':'Tower Style Apartment (1 building)',
+  'office':'Office','warehouse':'Warehouse','manufacturing':'Manufacturing',
+  'gym':'Gym','rec-center':'Rec Center','hospital':'Hospital',
+  'medical-outpatient':'Medical Outpatient Facility','veterinary':'Veterinary Hospital',
+  'hotel':'Hotel','school':'School','municipal-gov':'Municipal/Government Building',
+  'shelter':'Shelter','other-business':'Other Business',
+};
+const MACH_NAME_MAP = {
+  'snacks-drinks-ai':'Snacks + Drinks (AI)','drink-machine':'Drink Machine',
+  'bulk-snacks-frozen':'Bulk Snacks + Frozen Meals','freezer':'Freezer',
+  'micromarket':'Micromarket','other':'Other',
+};
+const DENSITY_NAME_MAP = {
+  'major-city':'Major City','city':'City (<1M Population)','suburban':'Suburban','rural':'Rural',
+};
+
+// Blended $/Machine/Unit from Route Group Analysis v5
+const ROUTE_BLENDED_DPM = {
+  'Garden Style Apartment|City (<1M Population)|Drink Machine':2.25,'Garden Style Apartment|City (<1M Population)|Freezer':2.13,'Garden Style Apartment|City (<1M Population)|Micromarket':2.79,'Garden Style Apartment|City (<1M Population)|Other':3.62,'Garden Style Apartment|City (<1M Population)|Snacks + Drinks (AI)':2.99,
+  'Garden Style Apartment|Major City|Drink Machine':2.95,'Garden Style Apartment|Major City|Micromarket':4.62,'Garden Style Apartment|Major City|Other':9.14,'Garden Style Apartment|Major City|Snacks + Drinks (AI)':3.88,
+  'Garden Style Apartment|Suburban|Drink Machine':1.49,'Garden Style Apartment|Suburban|Micromarket':2.17,'Garden Style Apartment|Suburban|Snacks + Drinks (AI)':1.55,
+  'Gym|City (<1M Population)|Drink Machine':5.09,'Gym|City (<1M Population)|Freezer':10.34,'Gym|City (<1M Population)|Other':4.03,'Gym|City (<1M Population)|Snacks + Drinks (AI)':3.65,
+  'Gym|Major City|Drink Machine':5.72,'Gym|Major City|Other':4.10,'Gym|Major City|Snacks + Drinks (AI)':5.01,
+  'Gym|Rural|Drink Machine':6.38,'Gym|Suburban|Drink Machine':4.34,'Gym|Suburban|Other':8.29,'Gym|Suburban|Snacks + Drinks (AI)':3.74,
+  'High Rise Apartment|City (<1M Population)|Drink Machine':6.69,'High Rise Apartment|City (<1M Population)|Snacks + Drinks (AI)':7.12,
+  'High Rise Apartment|Major City|Drink Machine':4.21,'High Rise Apartment|Major City|Other':4.80,'High Rise Apartment|Major City|Snacks + Drinks (AI)':5.53,
+  'High Rise Apartment|Rural|Drink Machine':5.84,'High Rise Apartment|Suburban|Drink Machine':4.29,'High Rise Apartment|Suburban|Snacks + Drinks (AI)':4.35,
+  'Hospital|City (<1M Population)|Drink Machine':3.47,'Hospital|City (<1M Population)|Other':5.17,
+  'Hotel|Major City|Snacks + Drinks (AI)':9.00,'Hotel|Rural|Drink Machine':4.81,'Hotel|Rural|Other':11.48,
+  'Manufacturing|City (<1M Population)|Drink Machine':5.74,'Manufacturing|City (<1M Population)|Micromarket':9.57,'Manufacturing|City (<1M Population)|Other':8.04,'Manufacturing|City (<1M Population)|Snacks + Drinks (AI)':6.61,
+  'Manufacturing|Major City|Drink Machine':7.90,'Manufacturing|Major City|Other':7.03,'Manufacturing|Major City|Snacks + Drinks (AI)':8.94,
+  'Manufacturing|Rural|Other':9.59,'Manufacturing|Suburban|Drink Machine':16.72,'Manufacturing|Suburban|Other':19.20,
+  'Medical Outpatient Facility|City (<1M Population)|Drink Machine':3.82,
+  'Mid Rise Apartment|City (<1M Population)|Bulk Snacks + Frozen Meals':8.25,'Mid Rise Apartment|City (<1M Population)|Drink Machine':7.17,'Mid Rise Apartment|City (<1M Population)|Micromarket':10.24,'Mid Rise Apartment|City (<1M Population)|Other':6.50,'Mid Rise Apartment|City (<1M Population)|Snacks + Drinks (AI)':8.74,
+  'Mid Rise Apartment|Major City|Bulk Snacks + Frozen Meals':7.33,'Mid Rise Apartment|Major City|Drink Machine':7.54,'Mid Rise Apartment|Major City|Other':10.29,'Mid Rise Apartment|Major City|Snacks + Drinks (AI)':7.13,
+  'Mid Rise Apartment|Rural|Freezer':4.72,'Mid Rise Apartment|Rural|Snacks + Drinks (AI)':6.73,
+  'Mid Rise Apartment|Suburban|Drink Machine':5.55,'Mid Rise Apartment|Suburban|Other':6.68,'Mid Rise Apartment|Suburban|Snacks + Drinks (AI)':5.41,
+  'Municipal/Government Building|City (<1M Population)|Drink Machine':6.62,'Municipal/Government Building|Major City|Drink Machine':2.74,
+  'Municipal/Government Building|Rural|Drink Machine':3.25,'Municipal/Government Building|Rural|Snacks + Drinks (AI)':7.58,
+  'Municipal/Government Building|Suburban|Drink Machine':1.63,'Municipal/Government Building|Suburban|Snacks + Drinks (AI)':1.08,
+  'Office|City (<1M Population)|Drink Machine':5.23,'Office|City (<1M Population)|Micromarket':11.73,'Office|City (<1M Population)|Snacks + Drinks (AI)':5.54,
+  'Office|Major City|Drink Machine':8.69,'Office|Major City|Micromarket':12.95,'Office|Major City|Other':7.24,'Office|Major City|Snacks + Drinks (AI)':7.61,
+  'Office|Suburban|Drink Machine':5.67,'Office|Suburban|Snacks + Drinks (AI)':4.67,
+  'Other Business|City (<1M Population)|Bulk Snacks + Frozen Meals':12.64,'Other Business|City (<1M Population)|Drink Machine':12.07,'Other Business|City (<1M Population)|Micromarket':15.80,'Other Business|City (<1M Population)|Snacks + Drinks (AI)':12.50,
+  'Other Business|Major City|Drink Machine':7.23,'Other Business|Major City|Freezer':6.64,'Other Business|Major City|Micromarket':7.52,'Other Business|Major City|Other':7.59,'Other Business|Major City|Snacks + Drinks (AI)':4.77,
+  'Other Business|Suburban|Drink Machine':6.34,'Other Business|Suburban|Other':4.29,'Other Business|Suburban|Snacks + Drinks (AI)':4.39,
+  'Rec Center|City (<1M Population)|Drink Machine':7.28,
+  'School|City (<1M Population)|Bulk Snacks + Frozen Meals':9.90,'School|City (<1M Population)|Drink Machine':6.38,'School|City (<1M Population)|Other':8.42,'School|City (<1M Population)|Snacks + Drinks (AI)':6.64,
+  'Shelter|Major City|Snacks + Drinks (AI)':4.96,
+  'Tower Style Apartment (1 building)|City (<1M Population)|Drink Machine':5.76,'Tower Style Apartment (1 building)|City (<1M Population)|Freezer':14.59,'Tower Style Apartment (1 building)|City (<1M Population)|Other':8.57,'Tower Style Apartment (1 building)|City (<1M Population)|Snacks + Drinks (AI)':8.57,
+  'Tower Style Apartment (1 building)|Major City|Drink Machine':12.50,
+  'Veterinary Hospital|City (<1M Population)|Freezer':11.47,'Veterinary Hospital|Major City|Other':18.20,'Veterinary Hospital|Suburban|Drink Machine':7.00,
+  'Warehouse|City (<1M Population)|Drink Machine':15.10,'Warehouse|City (<1M Population)|Micromarket':9.83,'Warehouse|City (<1M Population)|Other':11.43,'Warehouse|City (<1M Population)|Snacks + Drinks (AI)':11.86,
+  'Warehouse|Major City|Drink Machine':34.27,'Warehouse|Major City|Snacks + Drinks (AI)':20.40,
+  'Warehouse|Rural|Drink Machine':34.73,'Warehouse|Suburban|Drink Machine':8.17,'Warehouse|Suburban|Micromarket':8.49,'Warehouse|Suburban|Snacks + Drinks (AI)':8.99,
+};
+
+const PROP_LOC_AVG_DPM = {
+  'Garden Style Apartment|City (<1M Population)':2.93,'Garden Style Apartment|Major City':4.20,'Garden Style Apartment|Suburban':1.61,
+  'Gym|City (<1M Population)':5.23,'Gym|Major City':4.98,'Gym|Rural':6.38,'Gym|Suburban':4.95,
+  'High Rise Apartment|City (<1M Population)':6.96,'High Rise Apartment|Major City':5.47,'High Rise Apartment|Rural':5.84,'High Rise Apartment|Suburban':4.34,
+  'Hospital|City (<1M Population)':4.32,'Hotel|Major City':9.00,'Hotel|Rural':8.15,
+  'Manufacturing|City (<1M Population)':7.07,'Manufacturing|Major City':7.76,'Manufacturing|Rural':9.59,'Manufacturing|Suburban':17.22,
+  'Medical Outpatient Facility|City (<1M Population)':3.82,
+  'Mid Rise Apartment|City (<1M Population)':8.13,'Mid Rise Apartment|Major City':7.36,'Mid Rise Apartment|Rural':6.06,'Mid Rise Apartment|Suburban':5.66,
+  'Municipal/Government Building|City (<1M Population)':6.62,'Municipal/Government Building|Major City':2.74,'Municipal/Government Building|Rural':6.13,'Municipal/Government Building|Suburban':1.35,
+  'Office|City (<1M Population)':6.48,'Office|Major City':8.51,'Office|Suburban':5.33,
+  'Other Business|City (<1M Population)':12.61,'Other Business|Major City':6.94,'Other Business|Suburban':5.63,
+  'Rec Center|City (<1M Population)':7.28,
+  'School|City (<1M Population)':6.96,
+  'Shelter|Major City':4.96,
+  'Tower Style Apartment (1 building)|City (<1M Population)':9.10,'Tower Style Apartment (1 building)|Major City':12.50,
+  'Veterinary Hospital|City (<1M Population)':11.47,'Veterinary Hospital|Major City':18.20,'Veterinary Hospital|Suburban':7.00,
+  'Warehouse|City (<1M Population)':13.40,'Warehouse|Major City':29.64,'Warehouse|Rural':34.73,'Warehouse|Suburban':8.56,
+};
+
+const FALLBACK_DPM = 6.0;
+
+function lookupBlendedDPM(propVal, machVal) {
+  const propName = PROP_NAME_MAP[propVal] || '';
+  const machName = MACH_NAME_MAP[machVal] || '';
+  const locName = DENSITY_NAME_MAP[state.density] || 'City (<1M Population)';
+  const key = propName + '|' + locName + '|' + machName;
+  if (ROUTE_BLENDED_DPM[key]) return ROUTE_BLENDED_DPM[key];
+  const plKey = propName + '|' + locName;
+  if (PROP_LOC_AVG_DPM[plKey]) return PROP_LOC_AVG_DPM[plKey];
+  for (const k in ROUTE_BLENDED_DPM) {
+    if (k.startsWith(propName + '|') && k.endsWith('|' + machName)) return ROUTE_BLENDED_DPM[k];
+  }
+  return FALLBACK_DPM;
+}
+
+// ══════════════════════════════════
+//  RECOMMENDATION ENGINE
+// ══════════════════════════════════
+const PROFIT_PER_MACHINE = 800;
+const GOAL_MACHINE_MAP = {
+  supplemental: 3,
+  replace: 9,
+  family: 11,
+  scale: 13,
+};
+const RANK_WEIGHTS = [3, 2];
+
+const GOAL_LABELS = {
+  supplemental: 'Supplemental Income',
+  replace: 'Replace Day Job',
+  family: 'Family Business',
+  scale: 'Scale & Sell',
+};
+
+// ══════════════════════════════════
+//  INIT
+// ══════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  buildProgress();
+  buildPropertyGrid();
+  populateRepInfo();
+});
+
+function populateRepInfo() {
+  // Inject Calendly URL into the embed widget
+  const cal = document.getElementById('calendlyEmbed');
+  if (cal && SALES_REP.calendly) cal.setAttribute('data-url', SALES_REP.calendly);
+
+  // Sales rep name + email on the contact card
+  const nameEl = document.getElementById('repNameDisplay');
+  const emailEl = document.getElementById('repEmailLink');
+  if (nameEl) nameEl.textContent = SALES_REP.name || '';
+  if (emailEl && SALES_REP.email) {
+    emailEl.textContent = SALES_REP.email;
+    emailEl.href = 'mailto:' + SALES_REP.email;
+  }
+}
+
+function buildProgress() {
+  const wrap = document.getElementById('progressSteps');
+  STEP_LABELS.forEach((lbl, i) => {
+    const num = i + 1;
+    const isLast = i === STEP_LABELS.length - 1;
+    wrap.innerHTML += `
+      <div class="prog-step" onclick="jumpToStep(${num})">
+        <div class="prog-dot-wrap">
+          <div class="prog-dot ${state.step === num ? 'active' : state.step > num ? 'done' : ''}" id="pdot-${num}">
+            ${state.step > num ? '✓' : num}
+          </div>
+        </div>
+      </div>
+      ${!isLast ? '<div class="prog-line" id="pline-'+num+'"></div>' : ''}
+    `;
+  });
+}
+
+function updateProgress() {
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const dot = document.getElementById('pdot-'+i);
+    if (!dot) continue;
+    if (i === state.step) {
+      dot.className = 'prog-dot active';
+      dot.textContent = i;
+    } else if (i < state.step) {
+      dot.className = 'prog-dot done';
+      dot.textContent = '✓';
+    } else {
+      dot.className = 'prog-dot';
+      dot.textContent = i;
+    }
+    const line = document.getElementById('pline-'+i);
+    if (line) line.className = 'prog-line ' + (i < state.step ? 'done' : '');
+  }
+}
+
+// ══════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════
+function showStep(id) {
+  document.querySelectorAll('.step-screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); }
+  document.documentElement.scrollTop = 0;
+  window.scrollTo(0, 0);
+  updateProgress();
+}
+
+async function nextStep() {
+  // Validate current step
+  if (state.step === 1 && !validateStep1()) return;
+  if (state.step === 2 && !validateStep2()) return;
+
+  // Send the step we're leaving
+  sendToSheet(state.step, state.step === TOTAL_STEPS ? 'completed' : 'in_progress');
+
+  if (state.step < TOTAL_STEPS) {
+    state.step++;
+    if (state.step > state.maxVisited) state.maxVisited = state.step;
+    showStep('step-' + state.step);
+    if (state.step === 3) computeProjection();
+  }
+}
+
+function prevStep() {
+  if (state.step > 1) {
+    state.step--;
+    showStep('step-' + state.step);
+  }
+}
+
+function jumpToStep(n) {
+  if (n === state.step || n < 1 || n > TOTAL_STEPS) return;
+  if (n > state.maxVisited) return;
+  if (n > state.step) {
+    if (state.step === 1 && !validateStep1()) return;
+    if (state.step === 2 && !validateStep2()) return;
+  }
+  state.step = n;
+  showStep('step-' + n);
+  if (n === 3) computeProjection();
+}
+
+// ══════════════════════════════════
+//  VALIDATION
+// ══════════════════════════════════
+function clearFieldError(input) {
+  input.classList.remove('error');
+  const errEl = document.getElementById('nameError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+function showFieldError(inputId, errorId) {
+  const input = document.getElementById(inputId);
+  const err = document.getElementById(errorId);
+  if (input) input.classList.add('error');
+  if (err) err.style.display = 'block';
+}
+
+function validateStep1() {
+  const name = document.getElementById('fnName').value.trim();
+  if (!name) {
+    showFieldError('fnName', 'nameError');
+    document.getElementById('fnName').focus();
+    return false;
+  }
+  return true;
+}
+
+function validateStep2() {
+  let ok = true;
+  let firstBadEl = null;
+
+  const g1 = document.getElementById('goal1').value;
+  if (!g1) {
+    document.getElementById('goal1').classList.add('error');
+    document.getElementById('goal1Error').style.display = 'block';
+    ok = false; firstBadEl = firstBadEl || document.getElementById('goal1');
+  } else {
+    document.getElementById('goal1').classList.remove('error');
+    document.getElementById('goal1Error').style.display = 'none';
+  }
+
+  const g2 = document.getElementById('goal2').value;
+  if (!g2 || g2 === g1) {
+    document.getElementById('goal2').classList.add('error');
+    document.getElementById('goal2Error').style.display = 'block';
+    document.getElementById('goal2Error').textContent = !g2
+      ? 'Please select your #2 goal.'
+      : 'Your #2 goal must be different from your #1 goal.';
+    ok = false; firstBadEl = firstBadEl || document.getElementById('goal2');
+  } else {
+    document.getElementById('goal2').classList.remove('error');
+    document.getElementById('goal2Error').style.display = 'none';
+  }
+
+  if (!state.desiredProfit || state.desiredProfit <= 0) {
+    document.getElementById('fnDesiredProfit').classList.add('error');
+    document.getElementById('profitError').style.display = 'block';
+    ok = false; firstBadEl = firstBadEl || document.getElementById('fnDesiredProfit');
+  } else {
+    document.getElementById('fnDesiredProfit').classList.remove('error');
+    document.getElementById('profitError').style.display = 'none';
+  }
+
+  const validPlacements = Object.values(state.routePlacements || {}).filter(p => p.property && p.machine && p.units > 0);
+  if (validPlacements.length === 0) {
+    document.getElementById('routeError').style.display = 'block';
+    ok = false;
+    if (!firstBadEl) firstBadEl = document.getElementById('propertyGrid');
+  } else {
+    document.getElementById('routeError').style.display = 'none';
+  }
+
+  if (!state.density) {
+    document.getElementById('densityError').style.display = 'block';
+    ok = false;
+    if (!firstBadEl) firstBadEl = document.querySelector('[data-val="major-city"]');
+  } else {
+    document.getElementById('densityError').style.display = 'none';
+  }
+
+  if (firstBadEl && firstBadEl.scrollIntoView) {
+    firstBadEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  return ok;
+}
+
+// ══════════════════════════════════
+//  STEP 2: GOALS
+// ══════════════════════════════════
+function syncGoals() {
+  state.goal1 = document.getElementById('goal1').value || null;
+  state.goal2 = document.getElementById('goal2').value || null;
+  document.getElementById('goal1').classList.remove('error');
+  document.getElementById('goal1Error').style.display = 'none';
+  document.getElementById('goal2').classList.remove('error');
+  document.getElementById('goal2Error').style.display = 'none';
+  recalcMachines();
+}
+
+function formatProfit(input) {
+  let digits = input.value.replace(/\D/g, '');
+  if (!digits) {
+    input.value = '';
+    state.desiredProfit = null;
+    return;
+  }
+  input.value = parseInt(digits).toLocaleString();
+  state.desiredProfit = parseInt(digits);
+  input.classList.remove('error');
+  document.getElementById('profitError').style.display = 'none';
+}
+
+function recalcMachines() {
+  const numEl = document.getElementById('recMachineNum');
+  const labelEl = document.getElementById('recMachineLabel');
+  if (!numEl) return;
+
+  const goals = [state.goal1, state.goal2].filter(g => g);
+  const desiredProfit = state.desiredProfit || 0;
+
+  let goalBased = null;
+  let profitBased = null;
+
+  if (goals.length > 0) {
+    let weightedSum = 0;
+    let weightTotal = 0;
+    goals.forEach((g, i) => {
+      const w = RANK_WEIGHTS[i] || 1;
+      weightedSum += GOAL_MACHINE_MAP[g] * w;
+      weightTotal += w;
+    });
+    goalBased = weightedSum / weightTotal;
+  }
+
+  if (desiredProfit > 0) {
+    profitBased = desiredProfit / PROFIT_PER_MACHINE;
+  }
+
+  let recommended;
+  if (goalBased !== null && profitBased !== null) {
+    recommended = Math.round((goalBased + profitBased) / 2);
+    labelEl.textContent = recommended + ' machines recommended (based on goals + desired profit)';
+  } else if (goalBased !== null) {
+    recommended = Math.round(goalBased);
+    labelEl.textContent = recommended + ' machine' + (recommended > 1 ? 's' : '') + ' recommended (from goals)';
+  } else if (profitBased !== null) {
+    recommended = Math.round(profitBased);
+    labelEl.textContent = recommended + ' machine' + (recommended > 1 ? 's' : '') + ' recommended (from desired profit)';
+  } else {
+    numEl.textContent = '—';
+    labelEl.textContent = 'Pick your goals and enter desired profit to see recommendation';
+    state.machines = 1;
+    state.recommendedMachines = null;
+    return;
+  }
+
+  recommended = Math.max(1, recommended);
+  numEl.textContent = recommended;
+  state.machines = recommended;
+  state.recommendedMachines = recommended;
+}
+
+// ══════════════════════════════════
+//  STEP 2: PROPERTY GRID + ROUTE BUILDER
+// ══════════════════════════════════
+function buildPropertyGrid() {
+  const container = document.getElementById('propertyGrid');
+  container.innerHTML = '';
+  PROPERTY_DEFS.forEach(d => {
+    const count = state.propertyCounts[d.val] || 0;
+    const card = document.createElement('div');
+    card.className = 'counter-card' + (count > 0 ? ' active' : '');
+    card.id = 'prop-card-' + d.val;
+    card.innerHTML =
+      '<span class="cc-icon">' + d.icon + '</span>' +
+      '<div class="cc-name">' + d.name + '</div>' +
+      '<div class="cc-controls">' +
+        '<div class="cc-btn' + (count === 0 ? ' disabled' : '') + '" onclick="adjustCounter(\'' + d.val + '\',-1)">−</div>' +
+        '<div class="cc-count' + (count === 0 ? ' zero' : '') + '" id="prop-count-' + d.val + '">' + count + '</div>' +
+        '<div class="cc-btn" onclick="adjustCounter(\'' + d.val + '\',1)">+</div>' +
+      '</div>';
+    container.appendChild(card);
+  });
+  updatePropAllocated();
+}
+
+function adjustCounter(val, delta) {
+  const counts = state.propertyCounts;
+  const current = counts[val] || 0;
+  const newVal = current + delta;
+  if (newVal < 0) return;
+
+  counts[val] = newVal;
+  if (newVal === 0) delete counts[val];
+
+  const countEl = document.getElementById('prop-count-' + val);
+  const card = document.getElementById('prop-card-' + val);
+  if (countEl) {
+    countEl.textContent = newVal;
+    countEl.className = 'cc-count' + (newVal === 0 ? ' zero' : '');
+  }
+  if (card) {
+    card.className = 'counter-card' + (newVal > 0 ? ' active' : '');
+    const minusBtn = card.querySelector('.cc-btn');
+    if (minusBtn) minusBtn.className = 'cc-btn' + (newVal === 0 ? ' disabled' : '');
+  }
+
+  updatePropAllocated();
+  renderUnitInputs();
+}
+
+function updatePropAllocated() {
+  const total = Object.values(state.propertyCounts).reduce((s, v) => s + v, 0);
+  const el = document.getElementById('propAllocated');
+  if (el) el.textContent = total;
+}
+
+function renderUnitInputs() {
+  const container = document.getElementById('unitInputsList');
+  const wrapper = document.getElementById('propertyUnitInputs');
+  const activeProps = Object.entries(state.propertyCounts).filter(([k,v]) => v > 0);
+
+  if (activeProps.length === 0) {
+    wrapper.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  wrapper.style.display = 'block';
+
+  const existingUnits = {};
+  const existingMachines = {};
+  container.querySelectorAll('input[data-key]').forEach(inp => {
+    if (inp.value) existingUnits[inp.dataset.key] = inp.value;
+  });
+  container.querySelectorAll('select[data-key]').forEach(sel => {
+    if (sel.value) existingMachines[sel.dataset.key] = sel.value;
+  });
+
+  if (!state.routePlacements) state.routePlacements = {};
+
+  const validKeys = new Set();
+  activeProps.forEach(([prop, count]) => {
+    for (let i = 0; i < count; i++) validKeys.add(prop + ':' + i);
+  });
+  Object.keys(state.routePlacements).forEach(k => {
+    if (!validKeys.has(k)) delete state.routePlacements[k];
+  });
+
+  container.innerHTML = '';
+
+  const machOptions = '<option value="">Select machine…</option>' +
+    MACHINE_DEFS.map(m =>
+      '<option value="' + m.val + '">' + m.icon + ' ' + m.name + ' — $' + m.cost.toLocaleString() + '</option>'
+    ).join('');
+
+  activeProps.forEach(([prop, count]) => {
+    const unitLabel = UNIT_TYPE_MAP[prop] || 'Daily Visitors';
+    const label = PROPERTY_LABELS[prop] || prop;
+    for (let i = 0; i < count; i++) {
+      const key = prop + ':' + i;
+      const saved = state.routePlacements[key] || {};
+      const savedUnit = existingUnits[key] || (saved.units ? saved.units.toLocaleString() : '');
+      const savedMach = existingMachines[key] || saved.machine || '';
+      const displayNum = count > 1 ? ' #' + (i + 1) : '';
+
+      const row = document.createElement('div');
+      row.className = 'route-row';
+      row.innerHTML =
+        '<div class="route-row-title">' + label + displayNum + '</div>' +
+        '<div class="route-row-fields">' +
+          '<div class="route-row-field">' +
+            '<div class="route-row-field-label"># of ' + unitLabel + ' <span class="required-star">*</span></div>' +
+            '<input class="form-input" type="text" placeholder="e.g. 250" data-key="' + key + '" value="' + savedUnit + '" oninput="updateRoutePlacement(this)">' +
+          '</div>' +
+          '<div class="route-row-field" style="flex:2;min-width:200px;">' +
+            '<div class="route-row-field-label">Machine Type <span class="required-star">*</span></div>' +
+            '<select class="form-input" data-key="' + key + '" onchange="updateRoutePlacementMachine(this)">' +
+              (savedMach
+                ? machOptions.replace('value="' + savedMach + '"', 'value="' + savedMach + '" selected')
+                : machOptions
+              ) +
+            '</select>' +
+          '</div>' +
+        '</div>';
+      container.appendChild(row);
+    }
+  });
+}
+
+function updateRoutePlacement(input) {
+  let digits = input.value.replace(/\D/g, '');
+  if (digits) input.value = parseInt(digits).toLocaleString();
+  const key = input.dataset.key;
+  if (!state.routePlacements[key]) state.routePlacements[key] = {};
+  state.routePlacements[key].units = parseInt(digits) || 0;
+  state.routePlacements[key].property = key.split(':')[0];
+  document.getElementById('routeError').style.display = 'none';
+}
+
+function updateRoutePlacementMachine(select) {
+  const key = select.dataset.key;
+  if (!state.routePlacements[key]) state.routePlacements[key] = {};
+  state.routePlacements[key].machine = select.value;
+  state.routePlacements[key].machineCost = MACHINE_COSTS[select.value] || 0;
+  state.routePlacements[key].property = key.split(':')[0];
+  document.getElementById('routeError').style.display = 'none';
+}
+
+// ══════════════════════════════════
+//  STEP 2: DENSITY
+// ══════════════════════════════════
+function selectDensity(el) {
+  document.querySelectorAll('[data-val]').forEach(c => {
+    if (c.parentElement && c.parentElement.classList.contains('cols-4')) {
+      c.classList.remove('selected');
+    }
+  });
+  el.classList.add('selected');
+  state.density = el.dataset.val;
+  document.getElementById('densityError').style.display = 'none';
+}
+
+// ══════════════════════════════════
+//  STEP 3: PROJECTION
+// ══════════════════════════════════
+function computeProjection() {
+  const $$ = v => '$' + Math.round(v).toLocaleString();
+
+  const placements = Object.values(state.routePlacements || {}).filter(p => p.property && p.machine && p.units > 0);
+  const machineCount = placements.length;
+
+  let totalMonthlyRev = 0;
+  placements.forEach(p => {
+    const dpm = lookupBlendedDPM(p.property, p.machine);
+    totalMonthlyRev += Math.round(dpm * p.units);
+  });
+
+  const annualRev = totalMonthlyRev * 12;
+  const cogs = annualRev * 0.35;
+  const saas = annualRev * 0.105;
+  const dataFees = machineCount * 25 * 12;
+  const insurance = 100 * 12;
+  const totalExpenses = cogs + saas + dataFees + insurance;
+  const annualProfit = annualRev - totalExpenses;
+  const monthlyProfit = annualProfit / 12;
+
+  // Hero
+  const densityName = DENSITY_NAME_MAP[state.density] || 'City';
+  document.getElementById('projName').textContent = machineCount + '-machine route — ' + densityName + ' market';
+  const tags = [
+    '<strong>' + machineCount + '</strong> machines',
+    'Market: <strong>' + densityName + '</strong>',
+    state.goal1 ? 'Goal: <strong>' + (GOAL_LABELS[state.goal1] || state.goal1) + '</strong>' : '',
+  ].filter(t => t).map(t => '<div class="proj-summary-tag">' + t + '</div>').join('');
+  document.getElementById('projTags').innerHTML = tags;
+
+  // Big numbers
+  document.getElementById('monthlyProfit').textContent = $$(monthlyProfit);
+  document.getElementById('yearlyProfit').textContent = $$(annualProfit);
+
+  // Breakdown
+  const tbl = document.getElementById('projTable');
+  tbl.innerHTML =
+    row('Annual Gross Revenue', $$(annualRev), 'pos') +
+    row('Cost of Goods (35%)', '−' + $$(cogs), 'neg') +
+    row('SAAS Fees (10.5%)', '−' + $$(saas), 'neg') +
+    row('Data Fees ($25/mo × ' + machineCount + ' machines)', '−' + $$(dataFees), 'neg') +
+    row('Insurance ($100/mo)', '−' + $$(insurance), 'neg') +
+    rowTotal('Annual Take-Home Profit', $$(annualProfit), 'pos');
+
+  document.getElementById('costOfWaitingNum').textContent = $$(monthlyProfit);
+
+  // Stash for the sheet
+  state.projection = {
+    monthly_revenue: totalMonthlyRev,
+    annual_revenue: annualRev,
+    monthly_profit: Math.round(monthlyProfit),
+    annual_profit: Math.round(annualProfit),
+    cost_of_waiting: Math.round(monthlyProfit),
+    num_machines: machineCount,
+  };
+
+  // Final send — Step 3 values now land in the sheet
+  sendToSheet(3, 'completed');
+}
+
+function row(label, value, cls) {
+  return '<div class="proj-row"><div class="proj-row-label">' + label + '</div><div class="proj-row-value ' + (cls || '') + '">' + value + '</div></div>';
+}
+function rowTotal(label, value, cls) {
+  return '<div class="proj-row total"><div class="proj-row-label">' + label + '</div><div class="proj-row-value ' + (cls || '') + '">' + value + '</div></div>';
+}
+
+// ══════════════════════════════════
+//  GOOGLE SHEET POST
+// ══════════════════════════════════
+function sendToSheet(stepNum, status) {
+  const placementsArray = Object.entries(state.routePlacements || {})
+    .filter(([k, p]) => p.property && (p.units || p.machine))
+    .map(([k, p]) => ({
+      property: PROP_NAME_MAP[p.property] || p.property,
+      machine: MACH_NAME_MAP[p.machine] || p.machine || '',
+      units: p.units || 0,
+    }));
+
+  // Most-common machine for the summary column
+  const machineCounts = {};
+  placementsArray.forEach(p => {
+    if (p.machine) machineCounts[p.machine] = (machineCounts[p.machine] || 0) + 1;
+  });
+  const topMachine = Object.entries(machineCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+
+  const payload = {
+    session_id: state.session_id,
+    timestamp: new Date().toISOString(),
+    current_step: stepNum,
+    current_step_name: STEP_NAMES_MAP[stepNum] || '',
+    status: status || (stepNum === TOTAL_STEPS ? 'completed' : 'in_progress'),
+
+    // Step 1 — name only
+    name: document.getElementById('fnName')?.value.trim() || '',
+
+    // Sales rep (hardcoded per file) — used to filter Close lead matches
+    sales_rep_name: SALES_REP.name || '',
+
+    // Step 2
+    goal_1: GOAL_LABELS[state.goal1] || state.goal1 || '',
+    goal_2: GOAL_LABELS[state.goal2] || state.goal2 || '',
+    desired_monthly_profit: state.desiredProfit || '',
+    recommended_machines: state.recommendedMachines || '',
+    num_machines: state.projection?.num_machines || placementsArray.length || '',
+    market_density: DENSITY_NAME_MAP[state.density] || '',
+    route_placements: JSON.stringify(placementsArray),
+
+    // Step 3
+    est_monthly_revenue: state.projection?.monthly_revenue || '',
+    est_annual_revenue: state.projection?.annual_revenue || '',
+    est_monthly_profit: state.projection?.monthly_profit || '',
+    est_annual_profit: state.projection?.annual_profit || '',
+    cost_of_waiting: state.projection?.cost_of_waiting || '',
+  };
+
+  if (!SHEET_WEBHOOK_URL || SHEET_WEBHOOK_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    console.log('[sendToSheet stub] step:', stepNum, 'payload:', payload);
+    return;
+  }
+
+  fetch(SHEET_WEBHOOK_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(err => console.warn('Sheet send failed:', err));
+}
+</script>
+
+</body>
+</html>
