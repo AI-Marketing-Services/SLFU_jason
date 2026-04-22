@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VendingPreneur — Your Custom Projection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET & BASE ─── */
@@ -693,6 +694,14 @@ const SALES_REP = {
 //  SESSION ID — persisted so refreshes keep the same sheet row
 // ══════════════════════════════════
 function getSessionId() {
+  // Priority: URL param (?sid=) → sessionStorage → new
+  // This is what enables a shareable URL to reopen the same session.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('sid')) {
+    const urlId = params.get('sid');
+    sessionStorage.setItem('vp_session_id', urlId);
+    return urlId;
+  }
   let id = sessionStorage.getItem('vp_session_id');
   if (!id) {
     id = 'vp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
@@ -901,6 +910,12 @@ window.addEventListener('DOMContentLoaded', () => {
   buildProgress();
   buildPropertyGrid();
   populateRepInfo();
+
+  // If a shareable URL was used to load this page, restore the saved state.
+  // Done after grids exist so UI restoration finds its targets.
+  if (restoreFromURL()) {
+    setTimeout(restoreUIFromState, 50);
+  }
 });
 
 function populateRepInfo() {
@@ -1397,6 +1412,101 @@ function rowTotal(label, value, cls) {
 // ══════════════════════════════════
 //  GOOGLE SHEET POST
 // ══════════════════════════════════
+// ══════════════════════════════════
+//  SHAREABLE URL — collect & restore state
+// ══════════════════════════════════
+// Builds a URL that re-opens this form with all selections preserved.
+// State is JSON-stringified, LZ-compressed, and stuck in the ?d= param
+// alongside the session_id (?sid=). The URL is regenerated and sent to
+// the webhook on every step write — Apps Script writes it to the sheet
+// and includes it in the Close note.
+
+function collectRestorableState() {
+  return {
+    s: {
+      step: state.step,
+      maxVisited: state.maxVisited,
+      goal1: state.goal1,
+      goal2: state.goal2,
+      desiredProfit: state.desiredProfit,
+      machines: state.machines,
+      recommendedMachines: state.recommendedMachines,
+      propertyCounts: state.propertyCounts,
+      routePlacements: state.routePlacements,
+      density: state.density,
+      projection: state.projection,
+    },
+    f: {
+      name: document.getElementById('fnName')?.value || '',
+    },
+  };
+}
+
+function generateShareableURL() {
+  try {
+    const data = collectRestorableState();
+    const json = JSON.stringify(data);
+    const compressed = LZString.compressToEncodedURIComponent(json);
+    const baseURL = window.location.origin + window.location.pathname;
+    return baseURL + '?sid=' + encodeURIComponent(state.session_id) + '&d=' + compressed;
+  } catch (e) {
+    console.warn('[shareableURL] generation failed:', e);
+    return '';
+  }
+}
+
+function restoreFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('d')) return false;
+  try {
+    const json = LZString.decompressFromEncodedURIComponent(params.get('d'));
+    if (!json) return false;
+    const data = JSON.parse(json);
+    if (data.s) {
+      Object.keys(data.s).forEach(k => {
+        if (data.s[k] !== null && data.s[k] !== undefined) state[k] = data.s[k];
+      });
+    }
+    if (data.f) {
+      if (data.f.name) {
+        const el = document.getElementById('fnName');
+        if (el) el.value = data.f.name;
+      }
+    }
+    return true;
+  } catch (e) {
+    console.warn('[restoreFromURL] failed:', e);
+    return false;
+  }
+}
+
+function restoreUIFromState() {
+  // Property counts → rebuild grid, then route placements
+  if (state.propertyCounts && Object.keys(state.propertyCounts).length > 0) {
+    if (typeof buildPropertyGrid === 'function') buildPropertyGrid();
+  }
+  // Density selection
+  if (state.density) {
+    document.querySelectorAll('[data-val="' + state.density + '"]').forEach(c => c.classList.add('selected'));
+  }
+  // Goal dropdowns
+  if (state.goal1) { const el = document.getElementById('goal1'); if (el) el.value = state.goal1; }
+  if (state.goal2) { const el = document.getElementById('goal2'); if (el) el.value = state.goal2; }
+  // Desired profit display
+  if (state.desiredProfit) {
+    const el = document.getElementById('fnDesiredProfit');
+    if (el) el.value = state.desiredProfit.toLocaleString();
+  }
+  // Recompute downstream display
+  if (typeof recalcMachines === 'function') recalcMachines();
+  // Navigate to the step they were on
+  if (state.step && state.step >= 1 && state.step <= TOTAL_STEPS) {
+    state.maxVisited = Math.max(state.maxVisited || 1, state.step);
+    showStep('step-' + state.step);
+    if (state.step === 3 && typeof computeProjection === 'function') computeProjection();
+  }
+}
+
 function sendToSheet(stepNum, status) {
   const placementsArray = Object.entries(state.routePlacements || {})
     .filter(([k, p]) => p.property && (p.units || p.machine))
@@ -1441,6 +1551,9 @@ function sendToSheet(stepNum, status) {
     est_monthly_profit: state.projection?.monthly_profit || '',
     est_annual_profit: state.projection?.annual_profit || '',
     cost_of_waiting: state.projection?.cost_of_waiting || '',
+
+    // Shareable URL — regenerated on every send so it always reflects latest state
+    shareable_url: generateShareableURL(),
   };
 
   if (!SHEET_WEBHOOK_URL || SHEET_WEBHOOK_URL.includes('YOUR_DEPLOYMENT_ID')) {
