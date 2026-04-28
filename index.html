@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VendingPreneur — Your Custom Projection</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET & BASE ─── */
@@ -278,6 +279,152 @@ select.form-input {
 .opt-icon { font-size: 26px; margin-bottom: 8px; display: block; }
 .opt-title { font-weight: 700; font-size: 14px; color: var(--navy); }
 
+/* ─── PROPERTY SELECTION TILES (multi-select grid) ─── */
+.prop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+@media (max-width: 720px) { .prop-grid { grid-template-columns: repeat(2, 1fr); } }
+.prop-tile {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 10px;
+  cursor: pointer; transition: all 0.18s;
+  text-align: center;
+  position: relative;
+  user-select: none;
+}
+.prop-tile:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.prop-tile.selected {
+  border-color: var(--primary);
+  background: rgba(31,154,197,0.08);
+  box-shadow: 0 0 0 3px rgba(31,154,197,0.12);
+}
+.prop-tile.selected::after {
+  content: '✓'; position: absolute; top: 6px; right: 8px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.prop-tile-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+.prop-tile-name { font-weight: 700; font-size: 12.5px; color: var(--navy); line-height: 1.25; }
+
+/* ─── LOCATION CONFIG CARDS ─── */
+.loc-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.loc-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap; gap: 10px;
+}
+.loc-card-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.loc-card-title .icon { font-size: 22px; }
+
+.qty-stepper {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-lighter);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 6px;
+}
+.qty-stepper .qty-btn {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: none; background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--primary);
+  cursor: pointer; transition: all 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.qty-stepper .qty-btn:hover:not(.disabled) { background: var(--primary); color: white; }
+.qty-stepper .qty-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.qty-stepper .qty-val {
+  font-family: 'Poppins', sans-serif;
+  min-width: 22px; text-align: center;
+  font-size: 15px; font-weight: 700; color: var(--navy);
+}
+.qty-stepper .qty-label {
+  font-size: 11px; font-weight: 600; color: var(--text-mid);
+  margin-left: 4px; padding-right: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.mode-toggle {
+  display: flex;
+  background: var(--bg-lighter);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 14px;
+  width: fit-content;
+}
+.mode-toggle-btn {
+  border: none; background: transparent;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--text-mid); cursor: pointer; transition: all 0.18s;
+  letter-spacing: 0.3px;
+}
+.mode-toggle-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.default-panel {
+  background: var(--bg-light);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  font-size: 13px;
+}
+@media (max-width: 520px) { .default-panel { grid-template-columns: 1fr; } }
+.default-panel-col { display: flex; flex-direction: column; gap: 3px; }
+.default-panel-label {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-mid);
+}
+.default-panel-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px; font-weight: 700; color: var(--navy);
+}
+.default-panel-sub { font-size: 11px; color: var(--text-mid); }
+
+.custom-panel { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+@media (max-width: 520px) { .custom-panel { grid-template-columns: 1fr; } }
+.custom-panel .form-input { padding: 10px 14px; font-size: 13.5px; }
+.custom-field-label {
+  font-size: 11px; color: var(--text-mid); margin-bottom: 4px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+select.form-input {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231F9AC5' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
 /* ─── INFO BOX ─── */
 .info-box {
   background: var(--bg-light);
@@ -469,11 +616,7 @@ select.form-input {
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="topbar-brand">
-  <img src="https://github.com/AI-Marketing-Services/Stale_lead_followup_jason/raw/main/VP%20H%20White%20color.png" 
-       alt="VendingPreneur" 
-       style="height:36px;width:auto;display:block;">
-</div>
+  <div class="topbar-brand">Vending<span>Preneur</span> — Get Your Custom Projection</div>
   <div class="topbar-right">
     <div class="topbar-secure">🔒 Your info is private</div>
   </div>
@@ -567,17 +710,13 @@ select.form-input {
 
     <!-- SPECIFIC ROUTE BUILDER -->
     <div class="multi-label">Build Your Route <span class="required-star">*</span></div>
-    <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Pick the property types you're considering and how many of each. Then enter the size and machine type for each one.</p>
+    <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Pick the spots near you that could hold a vending machine. We'll auto-fill typical numbers — or click "Customize" if you have specifics.</p>
 
-    <div style="font-size:12px;color:var(--text-mid);margin-bottom:10px;">Locations selected: <strong id="propAllocated">0</strong></div>
-    <div id="propertyGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;"></div>
+    <div class="prop-grid" id="propertyGrid"></div>
+    <span class="field-error" id="routeError" style="margin-top:-12px;margin-bottom:16px;">Please pick at least one location to continue.</span>
 
-    <div id="propertyUnitInputs" style="margin-bottom:20px;display:none;">
-      <div class="multi-label" style="font-size:15px;margin-top:8px;">Route Details</div>
-      <p class="step-desc" style="margin-top:-4px;margin-bottom:12px;font-size:13px;">For each location, enter the size and choose a machine type.</p>
-      <div id="unitInputsList"></div>
-    </div>
-    <span class="field-error" id="routeError" style="margin-bottom:16px;">Please add at least one location with a size and machine type filled in.</span>
+    <!-- One config card per selected property type -->
+    <div id="locationCards" style="margin-bottom:20px;"></div>
 
     <!-- LOCATION TYPE -->
     <div class="multi-label">Location Type <span class="required-star">*</span></div>
@@ -674,7 +813,7 @@ select.form-input {
 
     <div class="step-nav">
       <button class="btn-back" onclick="prevStep()">← Back</button>
-      <div></div>
+      <button onclick="grabProjectionPDF()" style="background:var(--gold);border:none;border-radius:var(--radius-sm);padding:14px 28px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:var(--shadow-md);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">📄 Grab PDF</button>
     </div>
   </div>
 
@@ -726,8 +865,10 @@ const state = {
   desiredProfit: null,
   machines: 1,
   recommendedMachines: null,
-  propertyCounts: {},
-  routePlacements: {},
+  propertyCounts: {},        // legacy — kept for URL-restore back-compat only
+  routePlacements: {},       // legacy — kept for URL-restore back-compat only
+  selectedProps: [],         // current model: array of selected property values
+  locConfigs: {},            // current model: { propVal: {mode,count,units,machine} }
   density: null,
   projection: null,
 };
@@ -739,6 +880,7 @@ const STEP_NAMES_MAP = { 1: 'About You', 2: 'Goals & Route', 3: 'Projection' };
 // ══════════════════════════════════
 //  PROPERTY / MACHINE / DPM DATA
 // ══════════════════════════════════
+// Detailed property categories shown in the UI (17 types).
 const PROPERTY_DEFS = [
   {val:'high-rise-apartment', icon:'🏙️', name:'High Rise Apartment'},
   {val:'mid-rise-apartment', icon:'🏢', name:'Mid Rise Apartment'},
@@ -759,6 +901,7 @@ const PROPERTY_DEFS = [
   {val:'other-business', icon:'🏪', name:'Other Business'},
 ];
 
+// Display labels for spreadsheet/note output
 const PROPERTY_LABELS = {
   'high-rise-apartment':'High Rise Apartment','mid-rise-apartment':'Mid Rise Apartment',
   'garden-style-apartment':'Garden Style Apartment','tower-apartment':'Tower Style Apartment',
@@ -769,15 +912,83 @@ const PROPERTY_LABELS = {
   'shelter':'Shelter','other-business':'Other Business',
 };
 
+// Each detailed property maps to one of the reference's 8 consolidated
+// "buckets" used for DPM lookups in ROUTE_BLENDED_DPM. Buckets are:
+//   apartment, office-gov, gym, manufacturing-warehouse, medical, school, hotel, other
+const BUCKET_MAP = {
+  'high-rise-apartment':       'apartment',
+  'mid-rise-apartment':        'apartment',
+  'garden-style-apartment':    'apartment',
+  'tower-apartment':           'apartment',
+  'office':                    'office-gov',
+  'municipal-gov':             'office-gov',
+  'warehouse':                 'manufacturing-warehouse',
+  'manufacturing':             'manufacturing-warehouse',
+  'gym':                       'gym',
+  'rec-center':                'gym',
+  'hospital':                  'medical',
+  'medical-outpatient':        'medical',
+  'veterinary':                'medical',
+  'hotel':                     'hotel',
+  'school':                    'school',
+  'shelter':                   'other',
+  'other-business':            'other',
+};
+
+// Default unit count per detailed property (weighted-avg denominators from
+// VendingPreneur Shared Denominators data).
+const DEFAULT_DENOM = {
+  'high-rise-apartment':       281,
+  'mid-rise-apartment':        281,
+  'garden-style-apartment':    281,
+  'tower-apartment':           281,
+  'office':                    155,
+  'municipal-gov':             155,
+  'warehouse':                 106,
+  'manufacturing':             106,
+  'gym':                       175,
+  'rec-center':                175,
+  'hospital':                  85,
+  'medical-outpatient':        85,
+  'veterinary':                85,
+  'hotel':                     78,
+  'school':                    126,
+  'shelter':                   129,
+  'other-business':            129,
+};
+
+// Recommended machine per detailed property (data-driven: highest weighted-avg
+// $/machine/unit per bucket × machine, "Other" excluded).
+const DEFAULT_MACHINE_BY_PROP = {
+  'high-rise-apartment':       'bulk-snacks-frozen',
+  'mid-rise-apartment':        'bulk-snacks-frozen',
+  'garden-style-apartment':    'bulk-snacks-frozen',
+  'tower-apartment':           'bulk-snacks-frozen',
+  'office':                    'micromarket',
+  'municipal-gov':             'micromarket',
+  'warehouse':                 'drink-machine',
+  'manufacturing':             'drink-machine',
+  'gym':                       'drink-machine',
+  'rec-center':                'drink-machine',
+  'hospital':                  'drink-machine',
+  'medical-outpatient':        'drink-machine',
+  'veterinary':                'drink-machine',
+  'hotel':                     'snacks-drinks-ai',
+  'school':                    'drink-machine',
+  'shelter':                   'micromarket',
+  'other-business':            'micromarket',
+};
+
+// Unit label per detailed property (UI display)
 const UNIT_TYPE_MAP = {
-  'high-rise-apartment': 'Units','mid-rise-apartment': 'Units',
-  'garden-style-apartment': 'Units','tower-apartment': 'Units',
-  'office': 'Employees','warehouse': 'Employees','manufacturing': 'Employees',
-  'gym': 'Daily Visitors','rec-center': 'Daily Visitors','hospital': 'Daily Visitors',
-  'medical-outpatient': 'Daily Visitors','veterinary': 'Daily Visitors',
-  'hotel': 'Daily Visitors','school': 'Daily Visitors',
-  'municipal-gov': 'Daily Visitors','shelter': 'Daily Visitors',
-  'other-business': 'Daily Visitors',
+  'high-rise-apartment': 'units','mid-rise-apartment': 'units',
+  'garden-style-apartment': 'units','tower-apartment': 'units',
+  'office': 'employees','warehouse': 'employees','manufacturing': 'employees',
+  'gym': 'daily visitors','rec-center': 'daily visitors','hospital': 'daily visitors',
+  'medical-outpatient': 'daily visitors','veterinary': 'daily visitors',
+  'hotel': 'daily visitors','school': 'daily visitors',
+  'municipal-gov': 'daily visitors','shelter': 'daily visitors',
+  'other-business': 'daily visitors',
 };
 
 const MACHINE_DEFS = [
@@ -789,104 +1000,99 @@ const MACHINE_DEFS = [
   {val:'other', icon:'📦', name:'Other', cost:6000},
 ];
 
-const MACHINE_COSTS = {
-  'snacks-drinks-ai': 7000, 'drink-machine': 4000, 'bulk-snacks-frozen': 4000,
-  'freezer': 4700, 'micromarket': 8300, 'other': 6000
-};
-
-const PROP_NAME_MAP = {
-  'high-rise-apartment':'High Rise Apartment','mid-rise-apartment':'Mid Rise Apartment',
-  'garden-style-apartment':'Garden Style Apartment','tower-apartment':'Tower Style Apartment (1 building)',
-  'office':'Office','warehouse':'Warehouse','manufacturing':'Manufacturing',
-  'gym':'Gym','rec-center':'Rec Center','hospital':'Hospital',
-  'medical-outpatient':'Medical Outpatient Facility','veterinary':'Veterinary Hospital',
-  'hotel':'Hotel','school':'School','municipal-gov':'Municipal/Government Building',
-  'shelter':'Shelter','other-business':'Other Business',
-};
 const MACH_NAME_MAP = {
   'snacks-drinks-ai':'Snacks + Drinks (AI)','drink-machine':'Drink Machine',
   'bulk-snacks-frozen':'Bulk Snacks + Frozen Meals','freezer':'Freezer',
   'micromarket':'Micromarket','other':'Other',
 };
+
+const MACHINE_COSTS = {
+  'snacks-drinks-ai':7000,'drink-machine':4000,'bulk-snacks-frozen':4000,
+  'freezer':4700,'micromarket':8300,'other':6000,
+};
+
 const DENSITY_NAME_MAP = {
   'major-city':'Major City','city':'City (<1M Population)','suburban':'Suburban','rural':'Rural',
 };
 
-// Blended $/Machine/Unit from Route Group Analysis v5
-const ROUTE_BLENDED_DPM = {
-  'Garden Style Apartment|City (<1M Population)|Drink Machine':2.25,'Garden Style Apartment|City (<1M Population)|Freezer':2.13,'Garden Style Apartment|City (<1M Population)|Micromarket':2.79,'Garden Style Apartment|City (<1M Population)|Other':3.62,'Garden Style Apartment|City (<1M Population)|Snacks + Drinks (AI)':2.99,
-  'Garden Style Apartment|Major City|Drink Machine':2.95,'Garden Style Apartment|Major City|Micromarket':4.62,'Garden Style Apartment|Major City|Other':9.14,'Garden Style Apartment|Major City|Snacks + Drinks (AI)':3.88,
-  'Garden Style Apartment|Suburban|Drink Machine':1.49,'Garden Style Apartment|Suburban|Micromarket':2.17,'Garden Style Apartment|Suburban|Snacks + Drinks (AI)':1.55,
-  'Gym|City (<1M Population)|Drink Machine':5.09,'Gym|City (<1M Population)|Freezer':10.34,'Gym|City (<1M Population)|Other':4.03,'Gym|City (<1M Population)|Snacks + Drinks (AI)':3.65,
-  'Gym|Major City|Drink Machine':5.72,'Gym|Major City|Other':4.10,'Gym|Major City|Snacks + Drinks (AI)':5.01,
-  'Gym|Rural|Drink Machine':6.38,'Gym|Suburban|Drink Machine':4.34,'Gym|Suburban|Other':8.29,'Gym|Suburban|Snacks + Drinks (AI)':3.74,
-  'High Rise Apartment|City (<1M Population)|Drink Machine':6.69,'High Rise Apartment|City (<1M Population)|Snacks + Drinks (AI)':7.12,
-  'High Rise Apartment|Major City|Drink Machine':4.21,'High Rise Apartment|Major City|Other':4.80,'High Rise Apartment|Major City|Snacks + Drinks (AI)':5.53,
-  'High Rise Apartment|Rural|Drink Machine':5.84,'High Rise Apartment|Suburban|Drink Machine':4.29,'High Rise Apartment|Suburban|Snacks + Drinks (AI)':4.35,
-  'Hospital|City (<1M Population)|Drink Machine':3.47,'Hospital|City (<1M Population)|Other':5.17,
-  'Hotel|Major City|Snacks + Drinks (AI)':9.00,'Hotel|Rural|Drink Machine':4.81,'Hotel|Rural|Other':11.48,
-  'Manufacturing|City (<1M Population)|Drink Machine':5.74,'Manufacturing|City (<1M Population)|Micromarket':9.57,'Manufacturing|City (<1M Population)|Other':8.04,'Manufacturing|City (<1M Population)|Snacks + Drinks (AI)':6.61,
-  'Manufacturing|Major City|Drink Machine':7.90,'Manufacturing|Major City|Other':7.03,'Manufacturing|Major City|Snacks + Drinks (AI)':8.94,
-  'Manufacturing|Rural|Other':9.59,'Manufacturing|Suburban|Drink Machine':16.72,'Manufacturing|Suburban|Other':19.20,
-  'Medical Outpatient Facility|City (<1M Population)|Drink Machine':3.82,
-  'Mid Rise Apartment|City (<1M Population)|Bulk Snacks + Frozen Meals':8.25,'Mid Rise Apartment|City (<1M Population)|Drink Machine':7.17,'Mid Rise Apartment|City (<1M Population)|Micromarket':10.24,'Mid Rise Apartment|City (<1M Population)|Other':6.50,'Mid Rise Apartment|City (<1M Population)|Snacks + Drinks (AI)':8.74,
-  'Mid Rise Apartment|Major City|Bulk Snacks + Frozen Meals':7.33,'Mid Rise Apartment|Major City|Drink Machine':7.54,'Mid Rise Apartment|Major City|Other':10.29,'Mid Rise Apartment|Major City|Snacks + Drinks (AI)':7.13,
-  'Mid Rise Apartment|Rural|Freezer':4.72,'Mid Rise Apartment|Rural|Snacks + Drinks (AI)':6.73,
-  'Mid Rise Apartment|Suburban|Drink Machine':5.55,'Mid Rise Apartment|Suburban|Other':6.68,'Mid Rise Apartment|Suburban|Snacks + Drinks (AI)':5.41,
-  'Municipal/Government Building|City (<1M Population)|Drink Machine':6.62,'Municipal/Government Building|Major City|Drink Machine':2.74,
-  'Municipal/Government Building|Rural|Drink Machine':3.25,'Municipal/Government Building|Rural|Snacks + Drinks (AI)':7.58,
-  'Municipal/Government Building|Suburban|Drink Machine':1.63,'Municipal/Government Building|Suburban|Snacks + Drinks (AI)':1.08,
-  'Office|City (<1M Population)|Drink Machine':5.23,'Office|City (<1M Population)|Micromarket':11.73,'Office|City (<1M Population)|Snacks + Drinks (AI)':5.54,
-  'Office|Major City|Drink Machine':8.69,'Office|Major City|Micromarket':12.95,'Office|Major City|Other':7.24,'Office|Major City|Snacks + Drinks (AI)':7.61,
-  'Office|Suburban|Drink Machine':5.67,'Office|Suburban|Snacks + Drinks (AI)':4.67,
-  'Other Business|City (<1M Population)|Bulk Snacks + Frozen Meals':12.64,'Other Business|City (<1M Population)|Drink Machine':12.07,'Other Business|City (<1M Population)|Micromarket':15.80,'Other Business|City (<1M Population)|Snacks + Drinks (AI)':12.50,
-  'Other Business|Major City|Drink Machine':7.23,'Other Business|Major City|Freezer':6.64,'Other Business|Major City|Micromarket':7.52,'Other Business|Major City|Other':7.59,'Other Business|Major City|Snacks + Drinks (AI)':4.77,
-  'Other Business|Suburban|Drink Machine':6.34,'Other Business|Suburban|Other':4.29,'Other Business|Suburban|Snacks + Drinks (AI)':4.39,
-  'Rec Center|City (<1M Population)|Drink Machine':7.28,
-  'School|City (<1M Population)|Bulk Snacks + Frozen Meals':9.90,'School|City (<1M Population)|Drink Machine':6.38,'School|City (<1M Population)|Other':8.42,'School|City (<1M Population)|Snacks + Drinks (AI)':6.64,
-  'Shelter|Major City|Snacks + Drinks (AI)':4.96,
-  'Tower Style Apartment (1 building)|City (<1M Population)|Drink Machine':5.76,'Tower Style Apartment (1 building)|City (<1M Population)|Freezer':14.59,'Tower Style Apartment (1 building)|City (<1M Population)|Other':8.57,'Tower Style Apartment (1 building)|City (<1M Population)|Snacks + Drinks (AI)':8.57,
-  'Tower Style Apartment (1 building)|Major City|Drink Machine':12.50,
-  'Veterinary Hospital|City (<1M Population)|Freezer':11.47,'Veterinary Hospital|Major City|Other':18.20,'Veterinary Hospital|Suburban|Drink Machine':7.00,
-  'Warehouse|City (<1M Population)|Drink Machine':15.10,'Warehouse|City (<1M Population)|Micromarket':9.83,'Warehouse|City (<1M Population)|Other':11.43,'Warehouse|City (<1M Population)|Snacks + Drinks (AI)':11.86,
-  'Warehouse|Major City|Drink Machine':34.27,'Warehouse|Major City|Snacks + Drinks (AI)':20.40,
-  'Warehouse|Rural|Drink Machine':34.73,'Warehouse|Suburban|Drink Machine':8.17,'Warehouse|Suburban|Micromarket':8.49,'Warehouse|Suburban|Snacks + Drinks (AI)':8.99,
+// Bucket-name → display-name (used when building DPM lookup keys, since
+// the lookup tables are keyed by display names like "Manufacturing/Warehouse")
+const BUCKET_NAME_MAP = {
+  'apartment':                 'Apartment',
+  'office-gov':                'Office/Gov',
+  'gym':                       'Gym',
+  'manufacturing-warehouse':   'Manufacturing/Warehouse',
+  'medical':                   'Medical',
+  'school':                    'School',
+  'hotel':                     'Hotel',
+  'other':                     'Other',
 };
 
+// Bucket × Density × Machine — weighted-avg $/machine/unit from
+// Route Group Analysis (consolidated bucket version, copied from reference).
+const ROUTE_BLENDED_DPM = {
+  'Apartment|City (<1M Population)|Bulk Snacks + Frozen Meals':8.25,'Apartment|City (<1M Population)|Drink Machine':6.67,'Apartment|City (<1M Population)|Freezer':8.36,'Apartment|City (<1M Population)|Micromarket':6.52,'Apartment|City (<1M Population)|Other':6.09,'Apartment|City (<1M Population)|Snacks + Drinks (AI)':7.80,
+  'Apartment|Major City|Bulk Snacks + Frozen Meals':7.33,'Apartment|Major City|Drink Machine':6.85,'Apartment|Major City|Micromarket':4.62,'Apartment|Major City|Other':7.77,'Apartment|Major City|Snacks + Drinks (AI)':6.05,
+  'Apartment|Rural|Drink Machine':5.84,'Apartment|Rural|Freezer':4.72,'Apartment|Rural|Snacks + Drinks (AI)':6.73,
+  'Apartment|Suburban|Drink Machine':3.41,'Apartment|Suburban|Micromarket':2.17,'Apartment|Suburban|Other':6.68,'Apartment|Suburban|Snacks + Drinks (AI)':3.52,
+  'Gym|City (<1M Population)|Drink Machine':5.33,'Gym|City (<1M Population)|Freezer':10.34,'Gym|City (<1M Population)|Other':4.03,'Gym|City (<1M Population)|Snacks + Drinks (AI)':3.65,
+  'Gym|Major City|Drink Machine':5.72,'Gym|Major City|Other':4.10,'Gym|Major City|Snacks + Drinks (AI)':5.01,
+  'Gym|Rural|Drink Machine':6.38,
+  'Gym|Suburban|Drink Machine':4.34,'Gym|Suburban|Other':8.29,'Gym|Suburban|Snacks + Drinks (AI)':3.74,
+  'Hotel|Major City|Snacks + Drinks (AI)':9.00,
+  'Hotel|Rural|Drink Machine':4.81,'Hotel|Rural|Other':11.48,
+  'Manufacturing/Warehouse|City (<1M Population)|Drink Machine':11.98,'Manufacturing/Warehouse|City (<1M Population)|Micromarket':9.70,'Manufacturing/Warehouse|City (<1M Population)|Other':9.17,'Manufacturing/Warehouse|City (<1M Population)|Snacks + Drinks (AI)':10.55,
+  'Manufacturing/Warehouse|Major City|Drink Machine':21.08,'Manufacturing/Warehouse|Major City|Other':7.03,'Manufacturing/Warehouse|Major City|Snacks + Drinks (AI)':14.67,
+  'Manufacturing/Warehouse|Rural|Drink Machine':34.73,'Manufacturing/Warehouse|Rural|Other':9.59,
+  'Manufacturing/Warehouse|Suburban|Drink Machine':13.87,'Manufacturing/Warehouse|Suburban|Micromarket':8.49,'Manufacturing/Warehouse|Suburban|Other':19.20,'Manufacturing/Warehouse|Suburban|Snacks + Drinks (AI)':8.99,
+  'Medical|City (<1M Population)|Drink Machine':3.77,'Medical|City (<1M Population)|Freezer':11.47,'Medical|City (<1M Population)|Other':5.17,
+  'Medical|Major City|Other':18.20,
+  'Medical|Suburban|Drink Machine':7.00,
+  'Office/Gov|City (<1M Population)|Drink Machine':5.62,'Office/Gov|City (<1M Population)|Micromarket':11.73,'Office/Gov|City (<1M Population)|Snacks + Drinks (AI)':5.54,
+  'Office/Gov|Major City|Drink Machine':7.95,'Office/Gov|Major City|Micromarket':12.95,'Office/Gov|Major City|Other':7.24,'Office/Gov|Major City|Snacks + Drinks (AI)':7.61,
+  'Office/Gov|Rural|Drink Machine':3.25,'Office/Gov|Rural|Snacks + Drinks (AI)':7.58,
+  'Office/Gov|Suburban|Drink Machine':4.32,'Office/Gov|Suburban|Snacks + Drinks (AI)':2.88,
+  'Other|City (<1M Population)|Bulk Snacks + Frozen Meals':12.64,'Other|City (<1M Population)|Drink Machine':12.07,'Other|City (<1M Population)|Micromarket':15.80,'Other|City (<1M Population)|Snacks + Drinks (AI)':12.50,
+  'Other|Major City|Drink Machine':7.23,'Other|Major City|Freezer':6.64,'Other|Major City|Micromarket':7.52,'Other|Major City|Other':7.59,'Other|Major City|Snacks + Drinks (AI)':4.83,
+  'Other|Suburban|Drink Machine':6.34,'Other|Suburban|Other':4.29,'Other|Suburban|Snacks + Drinks (AI)':4.39,
+  'School|City (<1M Population)|Bulk Snacks + Frozen Meals':9.90,'School|City (<1M Population)|Drink Machine':6.38,'School|City (<1M Population)|Other':8.42,'School|City (<1M Population)|Snacks + Drinks (AI)':6.64,
+};
+
+// Bucket × Density average (fallback when no specific machine combo exists)
 const PROP_LOC_AVG_DPM = {
-  'Garden Style Apartment|City (<1M Population)':2.93,'Garden Style Apartment|Major City':4.20,'Garden Style Apartment|Suburban':1.61,
-  'Gym|City (<1M Population)':5.23,'Gym|Major City':4.98,'Gym|Rural':6.38,'Gym|Suburban':4.95,
-  'High Rise Apartment|City (<1M Population)':6.96,'High Rise Apartment|Major City':5.47,'High Rise Apartment|Rural':5.84,'High Rise Apartment|Suburban':4.34,
-  'Hospital|City (<1M Population)':4.32,'Hotel|Major City':9.00,'Hotel|Rural':8.15,
-  'Manufacturing|City (<1M Population)':7.07,'Manufacturing|Major City':7.76,'Manufacturing|Rural':9.59,'Manufacturing|Suburban':17.22,
-  'Medical Outpatient Facility|City (<1M Population)':3.82,
-  'Mid Rise Apartment|City (<1M Population)':8.13,'Mid Rise Apartment|Major City':7.36,'Mid Rise Apartment|Rural':6.06,'Mid Rise Apartment|Suburban':5.66,
-  'Municipal/Government Building|City (<1M Population)':6.62,'Municipal/Government Building|Major City':2.74,'Municipal/Government Building|Rural':6.13,'Municipal/Government Building|Suburban':1.35,
-  'Office|City (<1M Population)':6.48,'Office|Major City':8.51,'Office|Suburban':5.33,
-  'Other Business|City (<1M Population)':12.61,'Other Business|Major City':6.94,'Other Business|Suburban':5.63,
-  'Rec Center|City (<1M Population)':7.28,
+  'Apartment|City (<1M Population)':7.25,'Apartment|Major City':6.22,'Apartment|Rural':6.00,'Apartment|Suburban':3.60,
+  'Gym|City (<1M Population)':5.39,'Gym|Major City':4.98,'Gym|Rural':6.38,'Gym|Suburban':4.95,
+  'Hotel|Major City':9.00,'Hotel|Rural':8.14,
+  'Manufacturing/Warehouse|City (<1M Population)':10.94,'Manufacturing/Warehouse|Major City':15.97,'Manufacturing/Warehouse|Rural':15.88,'Manufacturing/Warehouse|Suburban':12.89,
+  'Medical|City (<1M Population)':4.78,'Medical|Major City':18.20,'Medical|Suburban':7.00,
+  'Office/Gov|City (<1M Population)':6.51,'Office/Gov|Major City':8.12,'Office/Gov|Rural':6.14,'Office/Gov|Suburban':3.74,
+  'Other|City (<1M Population)':12.62,'Other|Major City':6.80,'Other|Suburban':5.64,
   'School|City (<1M Population)':6.96,
-  'Shelter|Major City':4.96,
-  'Tower Style Apartment (1 building)|City (<1M Population)':9.10,'Tower Style Apartment (1 building)|Major City':12.50,
-  'Veterinary Hospital|City (<1M Population)':11.47,'Veterinary Hospital|Major City':18.20,'Veterinary Hospital|Suburban':7.00,
-  'Warehouse|City (<1M Population)':13.40,'Warehouse|Major City':29.64,'Warehouse|Rural':34.73,'Warehouse|Suburban':8.56,
 };
 
 const FALLBACK_DPM = 6.0;
 
-function lookupBlendedDPM(propVal, machVal) {
-  const propName = PROP_NAME_MAP[propVal] || '';
+// Resolve $/machine/unit for a (detailed property, machine, density) combo.
+// Translates the detailed prop to its consolidated bucket first.
+function lookupBlendedDPM(propVal, machVal, densityVal) {
+  const bucket = BUCKET_MAP[propVal] || 'other';
+  const bucketName = BUCKET_NAME_MAP[bucket] || 'Other';
   const machName = MACH_NAME_MAP[machVal] || '';
-  const locName = DENSITY_NAME_MAP[state.density] || 'City (<1M Population)';
-  const key = propName + '|' + locName + '|' + machName;
+  const locName = DENSITY_NAME_MAP[densityVal || state.density] || 'City (<1M Population)';
+
+  const key = bucketName + '|' + locName + '|' + machName;
   if (ROUTE_BLENDED_DPM[key]) return ROUTE_BLENDED_DPM[key];
-  const plKey = propName + '|' + locName;
+
+  const plKey = bucketName + '|' + locName;
   if (PROP_LOC_AVG_DPM[plKey]) return PROP_LOC_AVG_DPM[plKey];
+
+  // Last resort: any density for this bucket × machine
   for (const k in ROUTE_BLENDED_DPM) {
-    if (k.startsWith(propName + '|') && k.endsWith('|' + machName)) return ROUTE_BLENDED_DPM[k];
+    if (k.startsWith(bucketName + '|') && k.endsWith('|' + machName)) return ROUTE_BLENDED_DPM[k];
   }
   return FALLBACK_DPM;
 }
+
 
 // ══════════════════════════════════
 //  RECOMMENDATION ENGINE
@@ -1083,13 +1289,30 @@ function validateStep2() {
     document.getElementById('profitError').style.display = 'none';
   }
 
-  const validPlacements = Object.values(state.routePlacements || {}).filter(p => p.property && p.machine && p.units > 0);
-  if (validPlacements.length === 0) {
+  // Need at least one property selected
+  if (state.selectedProps.length === 0) {
     document.getElementById('routeError').style.display = 'block';
     ok = false;
     if (!firstBadEl) firstBadEl = document.getElementById('propertyGrid');
   } else {
-    document.getElementById('routeError').style.display = 'none';
+    // For any property in custom mode, units + machine must be set
+    let badCustom = false;
+    for (const val of state.selectedProps) {
+      const cfg = state.locConfigs[val];
+      if (cfg && cfg.mode === 'custom') {
+        if (!cfg.units || cfg.units <= 0 || !cfg.machine) {
+          badCustom = true;
+          if (!firstBadEl) firstBadEl = document.getElementById('loc-card-' + val);
+          break;
+        }
+      }
+    }
+    if (badCustom) {
+      document.getElementById('routeError').style.display = 'block';
+      ok = false;
+    } else {
+      document.getElementById('routeError').style.display = 'none';
+    }
   }
 
   if (!state.density) {
@@ -1183,149 +1406,165 @@ function recalcMachines() {
 }
 
 // ══════════════════════════════════
-//  STEP 2: PROPERTY GRID + ROUTE BUILDER
+//  STEP 2: PROPERTY TILES + LOCATION CONFIG CARDS
 // ══════════════════════════════════
+// Two-stage UI: (1) multi-select property tiles, (2) one config card per
+// selected property with a "Use Average" / "Customize" toggle. Default mode
+// shows the typical unit count + recommended machine for that property type;
+// custom mode lets the rep edit both. State lives in:
+//   state.selectedProps   — array of property values, e.g. ['gym','office']
+//   state.locConfigs[val] — { mode:'default'|'custom', count, units, machine }
+
 function buildPropertyGrid() {
   const container = document.getElementById('propertyGrid');
-  container.innerHTML = '';
-  PROPERTY_DEFS.forEach(d => {
-    const count = state.propertyCounts[d.val] || 0;
-    const card = document.createElement('div');
-    card.className = 'counter-card' + (count > 0 ? ' active' : '');
-    card.id = 'prop-card-' + d.val;
-    card.innerHTML =
-      '<span class="cc-icon">' + d.icon + '</span>' +
-      '<div class="cc-name">' + d.name + '</div>' +
-      '<div class="cc-controls">' +
-        '<div class="cc-btn' + (count === 0 ? ' disabled' : '') + '" onclick="adjustCounter(\'' + d.val + '\',-1)">−</div>' +
-        '<div class="cc-count' + (count === 0 ? ' zero' : '') + '" id="prop-count-' + d.val + '">' + count + '</div>' +
-        '<div class="cc-btn" onclick="adjustCounter(\'' + d.val + '\',1)">+</div>' +
-      '</div>';
-    container.appendChild(card);
-  });
-  updatePropAllocated();
+  container.innerHTML = PROPERTY_DEFS.map(d => {
+    const selected = state.selectedProps.includes(d.val);
+    return '<div class="prop-tile' + (selected ? ' selected' : '') + '" data-val="' + d.val + '" onclick="toggleProp(\'' + d.val + '\')">' +
+      '<span class="prop-tile-icon">' + d.icon + '</span>' +
+      '<div class="prop-tile-name">' + d.name + '</div>' +
+    '</div>';
+  }).join('');
 }
 
-function adjustCounter(val, delta) {
-  const counts = state.propertyCounts;
-  const current = counts[val] || 0;
-  const newVal = current + delta;
-  if (newVal < 0) return;
-
-  counts[val] = newVal;
-  if (newVal === 0) delete counts[val];
-
-  const countEl = document.getElementById('prop-count-' + val);
-  const card = document.getElementById('prop-card-' + val);
-  if (countEl) {
-    countEl.textContent = newVal;
-    countEl.className = 'cc-count' + (newVal === 0 ? ' zero' : '');
+function toggleProp(val) {
+  const idx = state.selectedProps.indexOf(val);
+  const tile = document.querySelector('.prop-tile[data-val="' + val + '"]');
+  if (idx > -1) {
+    state.selectedProps.splice(idx, 1);
+    delete state.locConfigs[val];
+    if (tile) tile.classList.remove('selected');
+  } else {
+    state.selectedProps.push(val);
+    // Seed with sensible defaults (Use Average mode)
+    state.locConfigs[val] = {
+      mode: 'default',
+      count: 1,
+      units: DEFAULT_DENOM[val] || 150,
+      machine: DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai',
+    };
+    if (tile) tile.classList.add('selected');
   }
-  if (card) {
-    card.className = 'counter-card' + (newVal > 0 ? ' active' : '');
-    const minusBtn = card.querySelector('.cc-btn');
-    if (minusBtn) minusBtn.className = 'cc-btn' + (newVal === 0 ? ' disabled' : '');
-  }
-
-  updatePropAllocated();
-  renderUnitInputs();
+  document.getElementById('routeError').style.display = 'none';
+  renderLocationCards();
 }
 
-function updatePropAllocated() {
-  const total = Object.values(state.propertyCounts).reduce((s, v) => s + v, 0);
-  const el = document.getElementById('propAllocated');
-  if (el) el.textContent = total;
-}
-
-function renderUnitInputs() {
-  const container = document.getElementById('unitInputsList');
-  const wrapper = document.getElementById('propertyUnitInputs');
-  const activeProps = Object.entries(state.propertyCounts).filter(([k,v]) => v > 0);
-
-  if (activeProps.length === 0) {
-    wrapper.style.display = 'none';
+function renderLocationCards() {
+  const container = document.getElementById('locationCards');
+  if (!container) return;
+  if (state.selectedProps.length === 0) {
     container.innerHTML = '';
     return;
   }
-  wrapper.style.display = 'block';
-
-  const existingUnits = {};
-  const existingMachines = {};
-  container.querySelectorAll('input[data-key]').forEach(inp => {
-    if (inp.value) existingUnits[inp.dataset.key] = inp.value;
-  });
-  container.querySelectorAll('select[data-key]').forEach(sel => {
-    if (sel.value) existingMachines[sel.dataset.key] = sel.value;
-  });
-
-  if (!state.routePlacements) state.routePlacements = {};
-
-  const validKeys = new Set();
-  activeProps.forEach(([prop, count]) => {
-    for (let i = 0; i < count; i++) validKeys.add(prop + ':' + i);
-  });
-  Object.keys(state.routePlacements).forEach(k => {
-    if (!validKeys.has(k)) delete state.routePlacements[k];
-  });
-
-  container.innerHTML = '';
-
-  const machOptions = '<option value="">Select machine…</option>' +
-    MACHINE_DEFS.map(m =>
-      '<option value="' + m.val + '">' + m.icon + ' ' + m.name + ' — $' + m.cost.toLocaleString() + '</option>'
-    ).join('');
-
-  activeProps.forEach(([prop, count]) => {
-    const unitLabel = UNIT_TYPE_MAP[prop] || 'Daily Visitors';
-    const label = PROPERTY_LABELS[prop] || prop;
-    for (let i = 0; i < count; i++) {
-      const key = prop + ':' + i;
-      const saved = state.routePlacements[key] || {};
-      const savedUnit = existingUnits[key] || (saved.units ? saved.units.toLocaleString() : '');
-      const savedMach = existingMachines[key] || saved.machine || '';
-      const displayNum = count > 1 ? ' #' + (i + 1) : '';
-
-      const row = document.createElement('div');
-      row.className = 'route-row';
-      row.innerHTML =
-        '<div class="route-row-title">' + label + displayNum + '</div>' +
-        '<div class="route-row-fields">' +
-          '<div class="route-row-field">' +
-            '<div class="route-row-field-label"># of ' + unitLabel + ' <span class="required-star">*</span></div>' +
-            '<input class="form-input" type="text" placeholder="e.g. 250" data-key="' + key + '" value="' + savedUnit + '" oninput="updateRoutePlacement(this)">' +
-          '</div>' +
-          '<div class="route-row-field" style="flex:2;min-width:200px;">' +
-            '<div class="route-row-field-label">Machine Type <span class="required-star">*</span></div>' +
-            '<select class="form-input" data-key="' + key + '" onchange="updateRoutePlacementMachine(this)">' +
-              (savedMach
-                ? machOptions.replace('value="' + savedMach + '"', 'value="' + savedMach + '" selected')
-                : machOptions
-              ) +
-            '</select>' +
-          '</div>' +
-        '</div>';
-      container.appendChild(row);
-    }
-  });
+  container.innerHTML = state.selectedProps.map(val => renderLocCard(val)).join('');
 }
 
-function updateRoutePlacement(input) {
+function renderLocCard(val) {
+  const def = PROPERTY_DEFS.find(p => p.val === val);
+  const cfg = state.locConfigs[val];
+  if (!def || !cfg) return '';
+  const unitLabel = UNIT_TYPE_MAP[val] || 'units';
+  const defaultUnits = DEFAULT_DENOM[val] || 150;
+  const defaultMach = DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai';
+  const defaultMachName = MACHINE_DEFS.find(m => m.val === defaultMach)?.name || 'Snacks + Drinks';
+  const isCustom = cfg.mode === 'custom';
+
+  const machOptions = MACHINE_DEFS.map(m =>
+    '<option value="' + m.val + '"' + (cfg.machine === m.val ? ' selected' : '') + '>' + m.icon + ' ' + m.name + '</option>'
+  ).join('');
+
+  return (
+    '<div class="loc-card" id="loc-card-' + val + '">' +
+      '<div class="loc-card-header">' +
+        '<div class="loc-card-title">' +
+          '<span class="icon">' + def.icon + '</span>' +
+          '<span>' + def.name + '</span>' +
+        '</div>' +
+        '<div class="qty-stepper">' +
+          '<span class="qty-label">How many?</span>' +
+          '<button type="button" class="qty-btn' + (cfg.count <= 1 ? ' disabled' : '') + '" onclick="adjustLocCount(\'' + val + '\', -1)">−</button>' +
+          '<span class="qty-val" id="qty-val-' + val + '">' + cfg.count + '</span>' +
+          '<button type="button" class="qty-btn" onclick="adjustLocCount(\'' + val + '\', 1)">+</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mode-toggle">' +
+        '<button type="button" class="mode-toggle-btn' + (!isCustom ? ' active' : '') + '" onclick="setLocMode(\'' + val + '\', \'default\')">Use Average</button>' +
+        '<button type="button" class="mode-toggle-btn' + (isCustom ? ' active' : '') + '" onclick="setLocMode(\'' + val + '\', \'custom\')">Customize</button>' +
+      '</div>' +
+      '<div id="loc-body-' + val + '">' +
+        (isCustom
+          ? renderCustomBody(val, unitLabel, cfg, machOptions)
+          : renderDefaultBody(val, unitLabel, defaultUnits, defaultMachName)
+        ) +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderDefaultBody(val, unitLabel, defaultUnits, defaultMachName) {
+  return (
+    '<div class="default-panel">' +
+      '<div class="default-panel-col">' +
+        '<div class="default-panel-label">Typical ' + unitLabel + '</div>' +
+        '<div class="default-panel-value">' + defaultUnits.toLocaleString() + '</div>' +
+        '<div class="default-panel-sub">Average across VendingPreneur routes</div>' +
+      '</div>' +
+      '<div class="default-panel-col">' +
+        '<div class="default-panel-label">Recommended Machine</div>' +
+        '<div class="default-panel-value" style="font-size:14px;">' + defaultMachName + '</div>' +
+        '<div class="default-panel-sub">Best match for this location type</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderCustomBody(val, unitLabel, cfg, machOptions) {
+  const unitsVal = typeof cfg.units === 'number' ? cfg.units.toLocaleString() : (cfg.units || '');
+  return (
+    '<div class="custom-panel">' +
+      '<div>' +
+        '<div class="custom-field-label"># of ' + unitLabel + '</div>' +
+        '<input class="form-input" type="text" inputmode="numeric" value="' + unitsVal + '" oninput="updateLocUnits(\'' + val + '\', this)">' +
+      '</div>' +
+      '<div>' +
+        '<div class="custom-field-label">Machine Type</div>' +
+        '<select class="form-input" onchange="updateLocMachine(\'' + val + '\', this.value)">' + machOptions + '</select>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function setLocMode(val, mode) {
+  state.locConfigs[val].mode = mode;
+  if (mode === 'custom') {
+    if (!state.locConfigs[val].units) state.locConfigs[val].units = DEFAULT_DENOM[val] || 150;
+    if (!state.locConfigs[val].machine) state.locConfigs[val].machine = DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai';
+  }
+  // Re-render only this card
+  const card = document.getElementById('loc-card-' + val);
+  if (card) card.outerHTML = renderLocCard(val);
+}
+
+function adjustLocCount(val, delta) {
+  const cfg = state.locConfigs[val];
+  const newCount = Math.max(1, (cfg.count || 1) + delta);
+  cfg.count = newCount;
+  const el = document.getElementById('qty-val-' + val);
+  if (el) el.textContent = newCount;
+  const card = document.getElementById('loc-card-' + val);
+  if (card) {
+    const minus = card.querySelector('.qty-stepper .qty-btn');
+    if (minus) minus.className = 'qty-btn' + (newCount <= 1 ? ' disabled' : '');
+  }
+}
+
+function updateLocUnits(val, input) {
   let digits = input.value.replace(/\D/g, '');
   if (digits) input.value = parseInt(digits).toLocaleString();
-  const key = input.dataset.key;
-  if (!state.routePlacements[key]) state.routePlacements[key] = {};
-  state.routePlacements[key].units = parseInt(digits) || 0;
-  state.routePlacements[key].property = key.split(':')[0];
-  document.getElementById('routeError').style.display = 'none';
+  state.locConfigs[val].units = parseInt(digits) || 0;
 }
 
-function updateRoutePlacementMachine(select) {
-  const key = select.dataset.key;
-  if (!state.routePlacements[key]) state.routePlacements[key] = {};
-  state.routePlacements[key].machine = select.value;
-  state.routePlacements[key].machineCost = MACHINE_COSTS[select.value] || 0;
-  state.routePlacements[key].property = key.split(':')[0];
-  document.getElementById('routeError').style.display = 'none';
+function updateLocMachine(val, machVal) {
+  state.locConfigs[val].machine = machVal;
 }
 
 // ══════════════════════════════════
@@ -1348,14 +1587,28 @@ function selectDensity(el) {
 function computeProjection() {
   const $$ = v => '$' + Math.round(v).toLocaleString();
 
-  const placements = Object.values(state.routePlacements || {}).filter(p => p.property && p.machine && p.units > 0);
+  // Expand selectedProps × locConfigs into a flat placements array. Each
+  // entry represents one machine. count multiplies; mode picks default vs
+  // custom values for units/machine.
+  const placements = [];
+  state.selectedProps.forEach(val => {
+    const cfg = state.locConfigs[val];
+    if (!cfg) return;
+    const units = cfg.units || DEFAULT_DENOM[val] || 150;
+    const machine = cfg.machine || DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai';
+    for (let i = 0; i < (cfg.count || 1); i++) {
+      placements.push({ property: val, machine, units, mode: cfg.mode });
+    }
+  });
+
   const machineCount = placements.length;
 
   let totalMonthlyRev = 0;
   placements.forEach(p => {
-    const dpm = lookupBlendedDPM(p.property, p.machine);
-    totalMonthlyRev += Math.round(dpm * p.units);
+    const dpm = lookupBlendedDPM(p.property, p.machine, state.density);
+    totalMonthlyRev += dpm * p.units;
   });
+  totalMonthlyRev = Math.round(totalMonthlyRev);
 
   const annualRev = totalMonthlyRev * 12;
   const cogs = annualRev * 0.35;
@@ -1370,7 +1623,7 @@ function computeProjection() {
   const densityName = DENSITY_NAME_MAP[state.density] || 'City';
   document.getElementById('projName').textContent = machineCount + '-machine route — ' + densityName + ' market';
   const tags = [
-    '<strong>' + machineCount + '</strong> machines',
+    '<strong>' + machineCount + '</strong> machine' + (machineCount !== 1 ? 's' : ''),
     'Market: <strong>' + densityName + '</strong>',
     state.goal1 ? 'Goal: <strong>' + (GOAL_LABELS[state.goal1] || state.goal1) + '</strong>' : '',
   ].filter(t => t).map(t => '<div class="proj-summary-tag">' + t + '</div>').join('');
@@ -1435,8 +1688,8 @@ function collectRestorableState() {
       desiredProfit: state.desiredProfit,
       machines: state.machines,
       recommendedMachines: state.recommendedMachines,
-      propertyCounts: state.propertyCounts,
-      routePlacements: state.routePlacements,
+      selectedProps: state.selectedProps,
+      locConfigs: state.locConfigs,
       density: state.density,
       projection: state.projection,
     },
@@ -1485,10 +1738,33 @@ function restoreFromURL() {
 }
 
 function restoreUIFromState() {
-  // Property counts → rebuild grid, then route placements
-  if (state.propertyCounts && Object.keys(state.propertyCounts).length > 0) {
-    if (typeof buildPropertyGrid === 'function') buildPropertyGrid();
+  // Back-compat: if a legacy URL had propertyCounts/routePlacements, translate
+  // them into the new selectedProps + locConfigs model so old shareable links
+  // still work.
+  if ((!state.selectedProps || state.selectedProps.length === 0) &&
+      state.propertyCounts && Object.keys(state.propertyCounts).length > 0) {
+    state.selectedProps = [];
+    state.locConfigs = state.locConfigs || {};
+    Object.entries(state.propertyCounts).forEach(([prop, count]) => {
+      if (!count) return;
+      state.selectedProps.push(prop);
+      // Try to pull units/machine from the first matching routePlacements entry
+      let units = DEFAULT_DENOM[prop] || 150;
+      let machine = DEFAULT_MACHINE_BY_PROP[prop] || 'snacks-drinks-ai';
+      const firstKey = Object.keys(state.routePlacements || {}).find(k => k.startsWith(prop + ':'));
+      if (firstKey) {
+        const rp = state.routePlacements[firstKey];
+        if (rp.units) units = rp.units;
+        if (rp.machine) machine = rp.machine;
+      }
+      state.locConfigs[prop] = { mode: 'default', count, units, machine };
+    });
   }
+
+  // Rebuild property grid + location cards from selectedProps
+  if (typeof buildPropertyGrid === 'function') buildPropertyGrid();
+  if (typeof renderLocationCards === 'function') renderLocationCards();
+
   // Density selection
   if (state.density) {
     document.querySelectorAll('[data-val="' + state.density + '"]').forEach(c => c.classList.add('selected'));
@@ -1511,14 +1787,122 @@ function restoreUIFromState() {
   }
 }
 
+// ══════════════════════════════════
+//  PDF EXPORT — Step 3 snapshot
+// ══════════════════════════════════
+// Pattern: clone live step-3, strip what doesn't belong in a PDF
+// (Calendly/rep card/nav), rewrite var(--X) on inline styles to hardcoded
+// hex (html2canvas can't resolve CSS vars on a detached element), force
+// fixed 800px white background, capture.
+
+function grabProjectionPDF() {
+  if (typeof html2pdf === 'undefined') {
+    alert("PDF library didn't load — check your internet and try again.");
+    return;
+  }
+
+  const live = document.getElementById('step-3');
+  if (!live) return;
+
+  const name = (document.getElementById('fnName')?.value || 'Prospect').trim();
+  const filename = 'VendingPreneur_Projection_' + name.replace(/\s+/g, '_') + '.pdf';
+
+  const C = {
+    bg: '#FFFFFF', navy: '#0D5E78', primary: '#1F9AC5', light: '#6BCFF0',
+    cream: '#F8FCFE', card: '#E8FAFF', accent: '#A2F2D4',
+    text: '#1E1E1E', textMid: '#3A3A3A', textLight: '#B9B9B9',
+    green: '#0D5E78', red: '#D94F3D', border: 'rgba(31,154,197,0.15)',
+  };
+
+  const VAR_MAP = {
+    '--primary': C.primary, '--primary-dark': C.navy, '--primary-light': C.light,
+    '--accent': C.accent, '--accent-dark': '#0086A8', '--accent-light': '#38CFF3',
+    '--bg-light': C.card, '--bg-lighter': C.cream, '--bg-mint': '#E0F7F5',
+    '--text': C.text, '--text-mid': C.textMid, '--text-light': C.textLight,
+    '--white': '#FFFFFF',
+    '--navy': C.navy, '--navy-2': C.primary, '--navy-3': C.light,
+    '--gold': C.primary, '--gold-2': C.light,
+    '--green': C.green, '--green-2': C.accent,
+    '--red': C.red,
+    '--cream': C.cream, '--cream-2': C.card,
+    '--card-bg': C.card, '--card-text': C.text, '--card-text-mid': C.textMid,
+    '--card-border': 'rgba(31,154,197,0.2)',
+    '--border': C.border, '--border-2': 'rgba(31,154,197,0.08)',
+    '--shadow-sm': 'none', '--shadow-md': 'none', '--shadow-lg': 'none',
+    '--radius': '12px', '--radius-sm': '8px', '--radius-lg': '16px',
+  };
+
+  function resolveVars(s) {
+    if (!s) return s;
+    return s.replace(/var\((--[a-z0-9-]+)\)/gi, (_, v) => VAR_MAP[v] || v);
+  }
+
+  const clone = live.cloneNode(true);
+
+  // Strip parts that don't belong in the PDF
+  ['.cta-section', '.step-nav', '.step-eyebrow'].forEach(sel => {
+    const node = clone.querySelector(sel);
+    if (node) node.remove();
+  });
+
+  // Rewrite var() in inline styles throughout the tree
+  [clone, ...clone.querySelectorAll('*')].forEach(el => {
+    const s = el.getAttribute('style');
+    if (s && s.indexOf('var(') !== -1) el.setAttribute('style', resolveVars(s));
+  });
+
+  // Off-screen, fixed 800px, white background, force display:block to override
+  // .step-screen { display:none } that applies to inactive steps.
+  clone.style.cssText =
+    'position:absolute;left:-9999px;top:0;display:block !important;' +
+    'width:800px;padding:36px;background:#FFFFFF;color:' + C.text + ';' +
+    'font-family:Inter,Helvetica,Arial,sans-serif;';
+
+  const header = document.createElement('div');
+  header.style.cssText = 'margin-bottom:20px;border-bottom:3px solid ' + C.primary + ';padding-bottom:14px;';
+  header.innerHTML =
+    '<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:' + C.primary + ';margin-bottom:6px;">VendingPreneur — Custom Route Projection</div>' +
+    '<div style="font-size:22px;font-weight:700;color:' + C.navy + ';">' + name + '</div>';
+  clone.insertBefore(header, clone.firstChild);
+
+  document.body.appendChild(clone);
+
+  const cloneHeight = clone.scrollHeight;
+  const cloneWidth = 800;
+
+  html2pdf().set({
+    margin: 0,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#FFFFFF', width: cloneWidth, windowWidth: cloneWidth },
+    jsPDF: { unit: 'px', format: [cloneWidth, cloneHeight], orientation: 'portrait' },
+    pagebreak: { mode: [] },
+  }).from(clone).save().then(() => {
+    clone.remove();
+  }).catch(err => {
+    console.error('[PDF] generation failed:', err);
+    clone.remove();
+    alert('PDF generation failed. See console for details.');
+  });
+}
+
 function sendToSheet(stepNum, status) {
-  const placementsArray = Object.entries(state.routePlacements || {})
-    .filter(([k, p]) => p.property && (p.units || p.machine))
-    .map(([k, p]) => ({
-      property: PROP_NAME_MAP[p.property] || p.property,
-      machine: MACH_NAME_MAP[p.machine] || p.machine || '',
-      units: p.units || 0,
-    }));
+  // Expand selectedProps × locConfigs into a flat placements array.
+  // Each entry is one machine with its property/machine/units.
+  const placementsArray = [];
+  state.selectedProps.forEach(val => {
+    const cfg = state.locConfigs[val] || {};
+    const units = cfg.units || DEFAULT_DENOM[val] || 150;
+    const machine = cfg.machine || DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai';
+    for (let i = 0; i < (cfg.count || 1); i++) {
+      placementsArray.push({
+        property: PROPERTY_LABELS[val] || val,
+        machine: MACH_NAME_MAP[machine] || machine,
+        units: units,
+        mode: cfg.mode || 'default',
+      });
+    }
+  });
 
   // Most-common machine for the summary column
   const machineCounts = {};
