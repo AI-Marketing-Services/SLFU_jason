@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VendingPreneur — Your Custom Projection</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET & BASE ─── */
@@ -610,6 +609,61 @@ select.form-input {
   .form-row { grid-template-columns: 1fr; }
   .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
 }
+/* ─── PRINT MODE — used by "Grab PDF" via window.print() ─── */
+/* When body.printing-projection is set, hide the entire UI except the
+   projection content. The print dialog will then render only step-3 in a
+   clean, paginated layout. User clicks "Save as PDF" in the print dialog. */
+@media print {
+  body.printing-projection {
+    background: white !important;
+  }
+  body.printing-projection .topbar,
+  body.printing-projection .progress-wrap,
+  body.printing-projection .step-screen:not(#step-3),
+  body.printing-projection #step-3 .step-eyebrow,
+  body.printing-projection #step-3 .step-nav,
+  body.printing-projection #step-3 .cta-section {
+    display: none !important;
+  }
+  body.printing-projection .main {
+    padding-top: 0 !important;
+  }
+  body.printing-projection #step-3 {
+    display: block !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    animation: none !important;
+  }
+  body.printing-projection #print-header {
+    display: block !important;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 3px solid var(--primary);
+  }
+  body.printing-projection #print-header .ph-eyebrow {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 6px;
+  }
+  body.printing-projection #print-header .ph-name {
+    font-size: 22px; font-weight: 700; color: var(--navy);
+    font-family: 'Poppins', sans-serif;
+  }
+  /* Avoid awkward page breaks inside key boxes */
+  body.printing-projection .projection-hero,
+  body.printing-projection .proj-big,
+  body.printing-projection .cost-waiting-box {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  /* Force colors to print (Chrome/Safari respect this) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+/* The print header element is hidden on screen; only shown when printing */
+#print-header { display: none; }
 </style>
 </head>
 <body>
@@ -1787,103 +1841,57 @@ function restoreUIFromState() {
   }
 }
 
+
 // ══════════════════════════════════
-//  PDF EXPORT — Step 3 snapshot
+//  PDF EXPORT — via window.print()
 // ══════════════════════════════════
-// Pattern: clone live step-3, strip what doesn't belong in a PDF
-// (Calendly/rep card/nav), rewrite var(--X) on inline styles to hardcoded
-// hex (html2canvas can't resolve CSS vars on a detached element), force
-// fixed 800px white background, capture.
+// Uses the browser's native print → "Save as PDF" flow rather than a
+// rasterizing JS library. This sidesteps html2canvas/foreignObject issues
+// (CORS-tainted canvas, blocked external stylesheets, browser quirks) that
+// were producing blank PDFs. The trade-off: rep clicks "Save as PDF" in the
+// print dialog instead of getting an instant download. One extra click, but
+// reliable across browsers and security contexts.
+//
+// Implementation: temporarily set body.printing-projection, which triggers
+// the @media print rules above to hide the entire UI except step-3 and the
+// dynamically-injected #print-header. Then call window.print(). Cleanup on
+// afterprint.
 
 function grabProjectionPDF() {
-  if (typeof html2pdf === 'undefined') {
-    alert("PDF library didn't load — check your internet and try again.");
-    return;
-  }
-
   const live = document.getElementById('step-3');
   if (!live) return;
 
   const name = (document.getElementById('fnName')?.value || 'Prospect').trim();
-  const filename = 'VendingPreneur_Projection_' + name.replace(/\s+/g, '_') + '.pdf';
 
-  const C = {
-    bg: '#FFFFFF', navy: '#0D5E78', primary: '#1F9AC5', light: '#6BCFF0',
-    cream: '#F8FCFE', card: '#E8FAFF', accent: '#A2F2D4',
-    text: '#1E1E1E', textMid: '#3A3A3A', textLight: '#B9B9B9',
-    green: '#0D5E78', red: '#D94F3D', border: 'rgba(31,154,197,0.15)',
-  };
-
-  const VAR_MAP = {
-    '--primary': C.primary, '--primary-dark': C.navy, '--primary-light': C.light,
-    '--accent': C.accent, '--accent-dark': '#0086A8', '--accent-light': '#38CFF3',
-    '--bg-light': C.card, '--bg-lighter': C.cream, '--bg-mint': '#E0F7F5',
-    '--text': C.text, '--text-mid': C.textMid, '--text-light': C.textLight,
-    '--white': '#FFFFFF',
-    '--navy': C.navy, '--navy-2': C.primary, '--navy-3': C.light,
-    '--gold': C.primary, '--gold-2': C.light,
-    '--green': C.green, '--green-2': C.accent,
-    '--red': C.red,
-    '--cream': C.cream, '--cream-2': C.card,
-    '--card-bg': C.card, '--card-text': C.text, '--card-text-mid': C.textMid,
-    '--card-border': 'rgba(31,154,197,0.2)',
-    '--border': C.border, '--border-2': 'rgba(31,154,197,0.08)',
-    '--shadow-sm': 'none', '--shadow-md': 'none', '--shadow-lg': 'none',
-    '--radius': '12px', '--radius-sm': '8px', '--radius-lg': '16px',
-  };
-
-  function resolveVars(s) {
-    if (!s) return s;
-    return s.replace(/var\((--[a-z0-9-]+)\)/gi, (_, v) => VAR_MAP[v] || v);
-  }
-
-  const clone = live.cloneNode(true);
-
-  // Strip parts that don't belong in the PDF
-  ['.cta-section', '.step-nav', '.step-eyebrow'].forEach(sel => {
-    const node = clone.querySelector(sel);
-    if (node) node.remove();
-  });
-
-  // Rewrite var() in inline styles throughout the tree
-  [clone, ...clone.querySelectorAll('*')].forEach(el => {
-    const s = el.getAttribute('style');
-    if (s && s.indexOf('var(') !== -1) el.setAttribute('style', resolveVars(s));
-  });
-
-  // Off-screen, fixed 800px, white background, force display:block to override
-  // .step-screen { display:none } that applies to inactive steps.
-  clone.style.cssText =
-    'position:absolute;left:-9999px;top:0;display:block !important;' +
-    'width:800px;padding:36px;background:#FFFFFF;color:' + C.text + ';' +
-    'font-family:Inter,Helvetica,Arial,sans-serif;';
-
+  // Inject a print-only header at the top of step-3 (hidden on screen,
+  // shown via @media print). Remove any prior one first.
+  const oldHeader = document.getElementById('print-header');
+  if (oldHeader) oldHeader.remove();
   const header = document.createElement('div');
-  header.style.cssText = 'margin-bottom:20px;border-bottom:3px solid ' + C.primary + ';padding-bottom:14px;';
+  header.id = 'print-header';
   header.innerHTML =
-    '<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:' + C.primary + ';margin-bottom:6px;">VendingPreneur — Custom Route Projection</div>' +
-    '<div style="font-size:22px;font-weight:700;color:' + C.navy + ';">' + name + '</div>';
-  clone.insertBefore(header, clone.firstChild);
+    '<div class="ph-eyebrow">VendingPreneur — Custom Route Projection</div>' +
+    '<div class="ph-name">' + name + '</div>';
+  live.insertBefore(header, live.firstChild);
 
-  document.body.appendChild(clone);
+  // Set the document title — most browsers use it as the default PDF filename
+  const originalTitle = document.title;
+  document.title = 'VendingPreneur_Projection_' + name.replace(/\s+/g, '_');
 
-  const cloneHeight = clone.scrollHeight;
-  const cloneWidth = 800;
+  // Toggle print mode on the body, fire print, then clean up
+  document.body.classList.add('printing-projection');
 
-  html2pdf().set({
-    margin: 0,
-    filename: filename,
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#FFFFFF', width: cloneWidth, windowWidth: cloneWidth },
-    jsPDF: { unit: 'px', format: [cloneWidth, cloneHeight], orientation: 'portrait' },
-    pagebreak: { mode: [] },
-  }).from(clone).save().then(() => {
-    clone.remove();
-  }).catch(err => {
-    console.error('[PDF] generation failed:', err);
-    clone.remove();
-    alert('PDF generation failed. See console for details.');
-  });
+  function cleanup() {
+    document.body.classList.remove('printing-projection');
+    document.title = originalTitle;
+    const h = document.getElementById('print-header');
+    if (h) h.remove();
+    window.removeEventListener('afterprint', cleanup);
+  }
+  window.addEventListener('afterprint', cleanup);
+
+  // Tiny delay so the class change is applied before print() snapshots layout
+  setTimeout(() => window.print(), 100);
 }
 
 function sendToSheet(stepNum, status) {
