@@ -414,16 +414,6 @@ select.form-input {
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
 }
 
-select.form-input {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231F9AC5' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
 /* ─── INFO BOX ─── */
 .info-box {
   background: var(--bg-light);
@@ -467,6 +457,57 @@ select.form-input {
   .proj-big-col + .proj-big-col { border-left: none; border-top: 1px solid var(--border); padding-top: 16px; }
 }
 
+/* ─── TOTAL ASSET VALUE BOX ─── */
+.proj-asset-box {
+  background: linear-gradient(135deg, #0a7a52 0%, #0f9e6a 50%, #12b577 100%);
+  border-radius: var(--radius-lg);
+  padding: 24px 32px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 0 8px 32px rgba(10, 122, 82, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+.proj-asset-box::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+}
+.proj-asset-box::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; right: 60px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.proj-asset-left { flex: 1; }
+.proj-asset-icon { font-size: 28px; margin-bottom: 4px; }
+.proj-asset-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: rgba(255,255,255,0.75); margin-bottom: 4px;
+}
+.proj-asset-sub { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+.proj-asset-right { text-align: right; flex-shrink: 0; }
+.proj-asset-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 42px; font-weight: 900;
+  color: #A2F2D4;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.proj-asset-num-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+@media (max-width: 600px) {
+  .proj-asset-box { flex-direction: column; text-align: center; }
+  .proj-asset-right { text-align: center; }
+}
+
 .proj-table {
   background: var(--white);
   border: 1px solid var(--border);
@@ -500,12 +541,34 @@ select.form-input {
   border-radius: var(--radius);
   padding: 24px;
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 .cw-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--red); margin-bottom: 8px; }
 .cw-headline { font-size: 16px; color: var(--text); line-height: 1.5; }
 .cw-num { font-family: 'Poppins', sans-serif; font-size: 42px; font-weight: 900; color: var(--red); margin: 8px 0; }
 .cw-sub { font-size: 13px; color: var(--text-mid); }
+
+/* ─── STARTUP COSTS DISCLAIMER ─── */
+.startup-disclaimer {
+  background: linear-gradient(135deg, rgba(31,154,197,0.07), rgba(31,154,197,0.12));
+  border: 1.5px solid rgba(31,154,197,0.3);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.startup-disclaimer-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.startup-disclaimer-text { flex: 1; }
+.startup-disclaimer-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--navy); margin-bottom: 4px;
+}
+.startup-disclaimer-body {
+  font-size: 13px; color: var(--text-mid); line-height: 1.55;
+}
 
 .cta-section {
   background: var(--bg-light);
@@ -609,10 +672,8 @@ select.form-input {
   .form-row { grid-template-columns: 1fr; }
   .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
 }
-/* ─── PRINT MODE — used by "Grab PDF" via window.print() ─── */
-/* When body.printing-projection is set, hide the entire UI except the
-   projection content. The print dialog will then render only step-3 in a
-   clean, paginated layout. User clicks "Save as PDF" in the print dialog. */
+
+/* ─── PRINT MODE ─── */
 @media print {
   body.printing-projection {
     background: white !important;
@@ -649,20 +710,19 @@ select.form-input {
     font-size: 22px; font-weight: 700; color: var(--navy);
     font-family: 'Poppins', sans-serif;
   }
-  /* Avoid awkward page breaks inside key boxes */
   body.printing-projection .projection-hero,
   body.printing-projection .proj-big,
-  body.printing-projection .cost-waiting-box {
+  body.printing-projection .proj-asset-box,
+  body.printing-projection .cost-waiting-box,
+  body.printing-projection .startup-disclaimer {
     page-break-inside: avoid;
     break-inside: avoid;
   }
-  /* Force colors to print (Chrome/Safari respect this) */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 }
-/* The print header element is hidden on screen; only shown when printing */
 #print-header { display: none; }
 </style>
 </head>
@@ -670,11 +730,11 @@ select.form-input {
 
 <!-- TOP BAR -->
 <div class="topbar">
-    <div class="topbar-brand">
-  <img src="https://github.com/AI-Marketing-Services/SLFU_jason/raw/main/VP%20H%20White%20color.png" 
-       alt="VendingPreneur" 
-       style="height:36px;width:auto;display:block;">
-</div>
+  <div class="topbar-brand">
+    <img src="https://github.com/AI-Marketing-Services/SLFU_jason/raw/main/VP%20H%20White%20color.png"
+         alt="VendingPreneur"
+         style="height:36px;width:auto;display:block;">
+  </div>
   <div class="topbar-right">
     <div class="topbar-secure">🔒 Your info is private</div>
   </div>
@@ -717,7 +777,6 @@ select.form-input {
 
     <!-- TOP 2 GOALS -->
     <div class="multi-label">Pick your top 2 goals <span class="required-star">*</span></div>
-    <!-- <p class="step-desc" style="margin-top:-4px;margin-bottom:14px;font-size:14px;">Your #1 goal weighs more than your #2 in the recommendation.</p> -->
     <div class="form-row">
       <div class="form-field">
         <label class="form-label">#1 Most important goal <span class="required-star">*</span></label>
@@ -773,7 +832,6 @@ select.form-input {
     <div class="prop-grid" id="propertyGrid"></div>
     <span class="field-error" id="routeError" style="margin-top:-12px;margin-bottom:16px;">Please pick at least one location to continue.</span>
 
-    <!-- One config card per selected property type -->
     <div id="locationCards" style="margin-bottom:20px;"></div>
 
     <!-- LOCATION TYPE -->
@@ -831,6 +889,19 @@ select.form-input {
       </div>
     </div>
 
+    <!-- TOTAL ASSET VALUE -->
+    <div class="proj-asset-box">
+      <div class="proj-asset-left">
+        <div class="proj-asset-icon">💼</div>
+        <div class="proj-asset-label">Total Route Asset Value</div>
+        <div class="proj-asset-sub">Estimated business equity based on annual revenue × 1.1</div>
+      </div>
+      <div class="proj-asset-right">
+        <div class="proj-asset-num" id="totalAssetValue">—</div>
+        <div class="proj-asset-num-label">estimated value</div>
+      </div>
+    </div>
+
     <!-- BREAKDOWN -->
     <div class="multi-label" style="margin-top:8px;">Annual Breakdown</div>
     <div class="proj-table" id="projTable"></div>
@@ -843,19 +914,26 @@ select.form-input {
       <div class="cw-sub">in potential monthly take-home profit</div>
     </div>
 
-    <!-- CTA SECTION: Calendly embed + sales rep contact -->
+    <!-- STARTUP COSTS DISCLAIMER -->
+    <div class="startup-disclaimer">
+      <div class="startup-disclaimer-icon">💡</div>
+      <div class="startup-disclaimer-text">
+        <div class="startup-disclaimer-title">Note on Startup Costs</div>
+        <div class="startup-disclaimer-body">This projection does not include startup costs such as machines or the coaching program. The good news: most startup costs for a vending business can be written off as a business expense, significantly reducing your out-of-pocket investment when tax time comes.</div>
+      </div>
+    </div>
+
+    <!-- CTA SECTION -->
     <div class="cta-section">
       <div class="cta-title">📅 Book Your Discovery Call</div>
       <div class="cta-sub">Pick a time that works for you. We'll walk through your numbers in detail.</div>
 
-      <!-- Calendly inline embed -->
       <div class="calendly-inline-widget"
            data-url=""
            id="calendlyEmbed"
            style="min-width:320px;height:700px;margin-top:16px;border-radius:var(--radius);overflow:hidden;"></div>
       <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
 
-      <!-- Sales rep contact card -->
       <div class="rep-card">
         <div class="rep-eyebrow">Questions? Reach out directly:</div>
         <div class="rep-name" id="repNameDisplay">—</div>
@@ -866,7 +944,7 @@ select.form-input {
     </div>
 
     <div class="disclaimer">
-      <strong>Disclaimer:</strong>These projections are estimates based on VendingPreneur member data across 500+ locations. Actual results depend on location quality, product mix, machine type, and operator effort.
+      <strong>Disclaimer:</strong> These projections are estimates based on VendingPreneur member data across 500+ locations. Actual results depend on location quality, product mix, machine type, and operator effort.
     </div>
 
     <div class="step-nav">
@@ -883,20 +961,16 @@ select.form-input {
 // ══════════════════════════════════
 const SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwuzHvnQ66XFFcgQPqG8yMevF622YCHzEWhqPTEHXJ1EawB9GdeSdhnwl2x7f7P1DNQNw/exec';
 
-// Hardcoded sales rep info — used for Close lead matching AND step 3 display.
-// Make a copy of this file per rep and edit these three values.
 const SALES_REP = {
-  name: 'Jason Aaron',                           // Must match exactly the Lead Owner name in Close
+  name: 'Jason Aaron',
   email: 'jasonaaron@modern-amenities.com',
   calendly: 'https://calendly.com/jasonaaron-modern-amenities/30min',
 };
 
 // ══════════════════════════════════
-//  SESSION ID — persisted so refreshes keep the same sheet row
+//  SESSION ID
 // ══════════════════════════════════
 function getSessionId() {
-  // Priority: URL param (?sid=) → sessionStorage → new
-  // This is what enables a shareable URL to reopen the same session.
   const params = new URLSearchParams(window.location.search);
   if (params.has('sid')) {
     const urlId = params.get('sid');
@@ -923,10 +997,10 @@ const state = {
   desiredProfit: null,
   machines: 1,
   recommendedMachines: null,
-  propertyCounts: {},        // legacy — kept for URL-restore back-compat only
-  routePlacements: {},       // legacy — kept for URL-restore back-compat only
-  selectedProps: [],         // current model: array of selected property values
-  locConfigs: {},            // current model: { propVal: {mode,count,units,machine} }
+  propertyCounts: {},
+  routePlacements: {},
+  selectedProps: [],
+  locConfigs: {},
   density: null,
   projection: null,
 };
@@ -938,7 +1012,6 @@ const STEP_NAMES_MAP = { 1: 'About You', 2: 'Goals & Route', 3: 'Projection' };
 // ══════════════════════════════════
 //  PROPERTY / MACHINE / DPM DATA
 // ══════════════════════════════════
-// Detailed property categories shown in the UI (17 types).
 const PROPERTY_DEFS = [
   {val:'high-rise-apartment', icon:'🏙️', name:'High Rise Apartment'},
   {val:'mid-rise-apartment', icon:'🏢', name:'Mid Rise Apartment'},
@@ -959,7 +1032,6 @@ const PROPERTY_DEFS = [
   {val:'other-business', icon:'🏪', name:'Other Business'},
 ];
 
-// Display labels for spreadsheet/note output
 const PROPERTY_LABELS = {
   'high-rise-apartment':'High Rise Apartment','mid-rise-apartment':'Mid Rise Apartment',
   'garden-style-apartment':'Garden Style Apartment','tower-apartment':'Tower Style Apartment',
@@ -970,9 +1042,6 @@ const PROPERTY_LABELS = {
   'shelter':'Shelter','other-business':'Other Business',
 };
 
-// Each detailed property maps to one of the reference's 8 consolidated
-// "buckets" used for DPM lookups in ROUTE_BLENDED_DPM. Buckets are:
-//   apartment, office-gov, gym, manufacturing-warehouse, medical, school, hotel, other
 const BUCKET_MAP = {
   'high-rise-apartment':       'apartment',
   'mid-rise-apartment':        'apartment',
@@ -993,8 +1062,6 @@ const BUCKET_MAP = {
   'other-business':            'other',
 };
 
-// Default unit count per detailed property (weighted-avg denominators from
-// VendingPreneur Shared Denominators data).
 const DEFAULT_DENOM = {
   'high-rise-apartment':       281,
   'mid-rise-apartment':        281,
@@ -1015,8 +1082,6 @@ const DEFAULT_DENOM = {
   'other-business':            129,
 };
 
-// Recommended machine per detailed property (data-driven: highest weighted-avg
-// $/machine/unit per bucket × machine, "Other" excluded).
 const DEFAULT_MACHINE_BY_PROP = {
   'high-rise-apartment':       'bulk-snacks-frozen',
   'mid-rise-apartment':        'bulk-snacks-frozen',
@@ -1037,7 +1102,6 @@ const DEFAULT_MACHINE_BY_PROP = {
   'other-business':            'micromarket',
 };
 
-// Unit label per detailed property (UI display)
 const UNIT_TYPE_MAP = {
   'high-rise-apartment': 'units','mid-rise-apartment': 'units',
   'garden-style-apartment': 'units','tower-apartment': 'units',
@@ -1073,8 +1137,6 @@ const DENSITY_NAME_MAP = {
   'major-city':'Major City','city':'City (<1M Population)','suburban':'Suburban','rural':'Rural',
 };
 
-// Bucket-name → display-name (used when building DPM lookup keys, since
-// the lookup tables are keyed by display names like "Manufacturing/Warehouse")
 const BUCKET_NAME_MAP = {
   'apartment':                 'Apartment',
   'office-gov':                'Office/Gov',
@@ -1086,8 +1148,6 @@ const BUCKET_NAME_MAP = {
   'other':                     'Other',
 };
 
-// Bucket × Density × Machine — weighted-avg $/machine/unit from
-// Route Group Analysis (consolidated bucket version, copied from reference).
 const ROUTE_BLENDED_DPM = {
   'Apartment|City (<1M Population)|Bulk Snacks + Frozen Meals':8.25,'Apartment|City (<1M Population)|Drink Machine':6.67,'Apartment|City (<1M Population)|Freezer':8.36,'Apartment|City (<1M Population)|Micromarket':6.52,'Apartment|City (<1M Population)|Other':6.09,'Apartment|City (<1M Population)|Snacks + Drinks (AI)':7.80,
   'Apartment|Major City|Bulk Snacks + Frozen Meals':7.33,'Apartment|Major City|Drink Machine':6.85,'Apartment|Major City|Micromarket':4.62,'Apartment|Major City|Other':7.77,'Apartment|Major City|Snacks + Drinks (AI)':6.05,
@@ -1116,7 +1176,6 @@ const ROUTE_BLENDED_DPM = {
   'School|City (<1M Population)|Bulk Snacks + Frozen Meals':9.90,'School|City (<1M Population)|Drink Machine':6.38,'School|City (<1M Population)|Other':8.42,'School|City (<1M Population)|Snacks + Drinks (AI)':6.64,
 };
 
-// Bucket × Density average (fallback when no specific machine combo exists)
 const PROP_LOC_AVG_DPM = {
   'Apartment|City (<1M Population)':7.25,'Apartment|Major City':6.22,'Apartment|Rural':6.00,'Apartment|Suburban':3.60,
   'Gym|City (<1M Population)':5.39,'Gym|Major City':4.98,'Gym|Rural':6.38,'Gym|Suburban':4.95,
@@ -1130,8 +1189,6 @@ const PROP_LOC_AVG_DPM = {
 
 const FALLBACK_DPM = 6.0;
 
-// Resolve $/machine/unit for a (detailed property, machine, density) combo.
-// Translates the detailed prop to its consolidated bucket first.
 function lookupBlendedDPM(propVal, machVal, densityVal) {
   const bucket = BUCKET_MAP[propVal] || 'other';
   const bucketName = BUCKET_NAME_MAP[bucket] || 'Other';
@@ -1144,13 +1201,11 @@ function lookupBlendedDPM(propVal, machVal, densityVal) {
   const plKey = bucketName + '|' + locName;
   if (PROP_LOC_AVG_DPM[plKey]) return PROP_LOC_AVG_DPM[plKey];
 
-  // Last resort: any density for this bucket × machine
   for (const k in ROUTE_BLENDED_DPM) {
     if (k.startsWith(bucketName + '|') && k.endsWith('|' + machName)) return ROUTE_BLENDED_DPM[k];
   }
   return FALLBACK_DPM;
 }
-
 
 // ══════════════════════════════════
 //  RECOMMENDATION ENGINE
@@ -1179,19 +1234,15 @@ window.addEventListener('DOMContentLoaded', () => {
   buildPropertyGrid();
   populateRepInfo();
 
-  // If a shareable URL was used to load this page, restore the saved state.
-  // Done after grids exist so UI restoration finds its targets.
   if (restoreFromURL()) {
     setTimeout(restoreUIFromState, 50);
   }
 });
 
 function populateRepInfo() {
-  // Inject Calendly URL into the embed widget
   const cal = document.getElementById('calendlyEmbed');
   if (cal && SALES_REP.calendly) cal.setAttribute('data-url', SALES_REP.calendly);
 
-  // Sales rep name + email on the contact card
   const nameEl = document.getElementById('repNameDisplay');
   const emailEl = document.getElementById('repEmailLink');
   if (nameEl) nameEl.textContent = SALES_REP.name || '';
@@ -1251,11 +1302,9 @@ function showStep(id) {
 }
 
 async function nextStep() {
-  // Validate current step
   if (state.step === 1 && !validateStep1()) return;
   if (state.step === 2 && !validateStep2()) return;
 
-  // Send the step we're leaving
   sendToSheet(state.step, state.step === TOTAL_STEPS ? 'completed' : 'in_progress');
 
   if (state.step < TOTAL_STEPS) {
@@ -1347,13 +1396,11 @@ function validateStep2() {
     document.getElementById('profitError').style.display = 'none';
   }
 
-  // Need at least one property selected
   if (state.selectedProps.length === 0) {
     document.getElementById('routeError').style.display = 'block';
     ok = false;
     if (!firstBadEl) firstBadEl = document.getElementById('propertyGrid');
   } else {
-    // For any property in custom mode, units + machine must be set
     let badCustom = false;
     for (const val of state.selectedProps) {
       const cfg = state.locConfigs[val];
@@ -1466,13 +1513,6 @@ function recalcMachines() {
 // ══════════════════════════════════
 //  STEP 2: PROPERTY TILES + LOCATION CONFIG CARDS
 // ══════════════════════════════════
-// Two-stage UI: (1) multi-select property tiles, (2) one config card per
-// selected property with a "Use Average" / "Customize" toggle. Default mode
-// shows the typical unit count + recommended machine for that property type;
-// custom mode lets the rep edit both. State lives in:
-//   state.selectedProps   — array of property values, e.g. ['gym','office']
-//   state.locConfigs[val] — { mode:'default'|'custom', count, units, machine }
-
 function buildPropertyGrid() {
   const container = document.getElementById('propertyGrid');
   container.innerHTML = PROPERTY_DEFS.map(d => {
@@ -1493,7 +1533,6 @@ function toggleProp(val) {
     if (tile) tile.classList.remove('selected');
   } else {
     state.selectedProps.push(val);
-    // Seed with sensible defaults (Use Average mode)
     state.locConfigs[val] = {
       mode: 'default',
       count: 1,
@@ -1597,7 +1636,6 @@ function setLocMode(val, mode) {
     if (!state.locConfigs[val].units) state.locConfigs[val].units = DEFAULT_DENOM[val] || 150;
     if (!state.locConfigs[val].machine) state.locConfigs[val].machine = DEFAULT_MACHINE_BY_PROP[val] || 'snacks-drinks-ai';
   }
-  // Re-render only this card
   const card = document.getElementById('loc-card-' + val);
   if (card) card.outerHTML = renderLocCard(val);
 }
@@ -1645,9 +1683,6 @@ function selectDensity(el) {
 function computeProjection() {
   const $$ = v => '$' + Math.round(v).toLocaleString();
 
-  // Expand selectedProps × locConfigs into a flat placements array. Each
-  // entry represents one machine. count multiplies; mode picks default vs
-  // custom values for units/machine.
   const placements = [];
   state.selectedProps.forEach(val => {
     const cfg = state.locConfigs[val];
@@ -1677,6 +1712,9 @@ function computeProjection() {
   const annualProfit = annualRev - totalExpenses;
   const monthlyProfit = annualProfit / 12;
 
+  // Total asset value: annual revenue × 1.1
+  const totalAssetValue = annualRev * 1.1;
+
   // Hero
   const densityName = DENSITY_NAME_MAP[state.density] || 'City';
   document.getElementById('projName').textContent = machineCount + '-machine route — ' + densityName + ' market';
@@ -1691,6 +1729,9 @@ function computeProjection() {
   document.getElementById('monthlyProfit').textContent = $$(monthlyProfit);
   document.getElementById('yearlyProfit').textContent = $$(annualProfit);
 
+  // Total asset value
+  document.getElementById('totalAssetValue').textContent = $$(totalAssetValue);
+
   // Breakdown
   const tbl = document.getElementById('projTable');
   tbl.innerHTML =
@@ -1703,17 +1744,16 @@ function computeProjection() {
 
   document.getElementById('costOfWaitingNum').textContent = $$(monthlyProfit);
 
-  // Stash for the sheet
   state.projection = {
     monthly_revenue: totalMonthlyRev,
     annual_revenue: annualRev,
     monthly_profit: Math.round(monthlyProfit),
     annual_profit: Math.round(annualProfit),
     cost_of_waiting: Math.round(monthlyProfit),
+    total_asset_value: Math.round(totalAssetValue),
     num_machines: machineCount,
   };
 
-  // Final send — Step 3 values now land in the sheet
   sendToSheet(3, 'completed');
 }
 
@@ -1725,17 +1765,8 @@ function rowTotal(label, value, cls) {
 }
 
 // ══════════════════════════════════
-//  GOOGLE SHEET POST
+//  SHAREABLE URL
 // ══════════════════════════════════
-// ══════════════════════════════════
-//  SHAREABLE URL — collect & restore state
-// ══════════════════════════════════
-// Builds a URL that re-opens this form with all selections preserved.
-// State is JSON-stringified, LZ-compressed, and stuck in the ?d= param
-// alongside the session_id (?sid=). The URL is regenerated and sent to
-// the webhook on every step write — Apps Script writes it to the sheet
-// and includes it in the Close note.
-
 function collectRestorableState() {
   return {
     s: {
@@ -1796,9 +1827,6 @@ function restoreFromURL() {
 }
 
 function restoreUIFromState() {
-  // Back-compat: if a legacy URL had propertyCounts/routePlacements, translate
-  // them into the new selectedProps + locConfigs model so old shareable links
-  // still work.
   if ((!state.selectedProps || state.selectedProps.length === 0) &&
       state.propertyCounts && Object.keys(state.propertyCounts).length > 0) {
     state.selectedProps = [];
@@ -1806,7 +1834,6 @@ function restoreUIFromState() {
     Object.entries(state.propertyCounts).forEach(([prop, count]) => {
       if (!count) return;
       state.selectedProps.push(prop);
-      // Try to pull units/machine from the first matching routePlacements entry
       let units = DEFAULT_DENOM[prop] || 150;
       let machine = DEFAULT_MACHINE_BY_PROP[prop] || 'snacks-drinks-ai';
       const firstKey = Object.keys(state.routePlacements || {}).find(k => k.startsWith(prop + ':'));
@@ -1819,25 +1846,19 @@ function restoreUIFromState() {
     });
   }
 
-  // Rebuild property grid + location cards from selectedProps
   if (typeof buildPropertyGrid === 'function') buildPropertyGrid();
   if (typeof renderLocationCards === 'function') renderLocationCards();
 
-  // Density selection
   if (state.density) {
     document.querySelectorAll('[data-val="' + state.density + '"]').forEach(c => c.classList.add('selected'));
   }
-  // Goal dropdowns
   if (state.goal1) { const el = document.getElementById('goal1'); if (el) el.value = state.goal1; }
   if (state.goal2) { const el = document.getElementById('goal2'); if (el) el.value = state.goal2; }
-  // Desired profit display
   if (state.desiredProfit) {
     const el = document.getElementById('fnDesiredProfit');
     if (el) el.value = state.desiredProfit.toLocaleString();
   }
-  // Recompute downstream display
   if (typeof recalcMachines === 'function') recalcMachines();
-  // Navigate to the step they were on
   if (state.step && state.step >= 1 && state.step <= TOTAL_STEPS) {
     state.maxVisited = Math.max(state.maxVisited || 1, state.step);
     showStep('step-' + state.step);
@@ -1845,30 +1866,15 @@ function restoreUIFromState() {
   }
 }
 
-
 // ══════════════════════════════════
-//  PDF EXPORT — via window.print()
+//  PDF EXPORT
 // ══════════════════════════════════
-// Uses the browser's native print → "Save as PDF" flow rather than a
-// rasterizing JS library. This sidesteps html2canvas/foreignObject issues
-// (CORS-tainted canvas, blocked external stylesheets, browser quirks) that
-// were producing blank PDFs. The trade-off: rep clicks "Save as PDF" in the
-// print dialog instead of getting an instant download. One extra click, but
-// reliable across browsers and security contexts.
-//
-// Implementation: temporarily set body.printing-projection, which triggers
-// the @media print rules above to hide the entire UI except step-3 and the
-// dynamically-injected #print-header. Then call window.print(). Cleanup on
-// afterprint.
-
 function grabProjectionPDF() {
   const live = document.getElementById('step-3');
   if (!live) return;
 
   const name = (document.getElementById('fnName')?.value || 'Prospect').trim();
 
-  // Inject a print-only header at the top of step-3 (hidden on screen,
-  // shown via @media print). Remove any prior one first.
   const oldHeader = document.getElementById('print-header');
   if (oldHeader) oldHeader.remove();
   const header = document.createElement('div');
@@ -1878,11 +1884,9 @@ function grabProjectionPDF() {
     '<div class="ph-name">' + name + '</div>';
   live.insertBefore(header, live.firstChild);
 
-  // Set the document title — most browsers use it as the default PDF filename
   const originalTitle = document.title;
   document.title = 'VendingPreneur_Projection_' + name.replace(/\s+/g, '_');
 
-  // Toggle print mode on the body, fire print, then clean up
   document.body.classList.add('printing-projection');
 
   function cleanup() {
@@ -1894,13 +1898,13 @@ function grabProjectionPDF() {
   }
   window.addEventListener('afterprint', cleanup);
 
-  // Tiny delay so the class change is applied before print() snapshots layout
   setTimeout(() => window.print(), 100);
 }
 
+// ══════════════════════════════════
+//  GOOGLE SHEET POST
+// ══════════════════════════════════
 function sendToSheet(stepNum, status) {
-  // Expand selectedProps × locConfigs into a flat placements array.
-  // Each entry is one machine with its property/machine/units.
   const placementsArray = [];
   state.selectedProps.forEach(val => {
     const cfg = state.locConfigs[val] || {};
@@ -1916,7 +1920,6 @@ function sendToSheet(stepNum, status) {
     }
   });
 
-  // Most-common machine for the summary column
   const machineCounts = {};
   placementsArray.forEach(p => {
     if (p.machine) machineCounts[p.machine] = (machineCounts[p.machine] || 0) + 1;
@@ -1930,13 +1933,9 @@ function sendToSheet(stepNum, status) {
     current_step_name: STEP_NAMES_MAP[stepNum] || '',
     status: status || (stepNum === TOTAL_STEPS ? 'completed' : 'in_progress'),
 
-    // Step 1 — name only
     name: document.getElementById('fnName')?.value.trim() || '',
-
-    // Sales rep (hardcoded per file) — used to filter Close lead matches
     sales_rep_name: SALES_REP.name || '',
 
-    // Step 2
     goal_1: GOAL_LABELS[state.goal1] || state.goal1 || '',
     goal_2: GOAL_LABELS[state.goal2] || state.goal2 || '',
     desired_monthly_profit: state.desiredProfit || '',
@@ -1945,14 +1944,13 @@ function sendToSheet(stepNum, status) {
     market_density: DENSITY_NAME_MAP[state.density] || '',
     route_placements: JSON.stringify(placementsArray),
 
-    // Step 3
     est_monthly_revenue: state.projection?.monthly_revenue || '',
     est_annual_revenue: state.projection?.annual_revenue || '',
     est_monthly_profit: state.projection?.monthly_profit || '',
     est_annual_profit: state.projection?.annual_profit || '',
     cost_of_waiting: state.projection?.cost_of_waiting || '',
+    total_asset_value: state.projection?.total_asset_value || '',
 
-    // Shareable URL — regenerated on every send so it always reflects latest state
     shareable_url: generateShareableURL(),
   };
 
